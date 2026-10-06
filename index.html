@@ -1371,7 +1371,7 @@
 
       <div class="addbox" id="stuAdminBox">
         <h3>تعيينه ضيف أدمن</h3>
-        <p class="note-s">اختار هو أدمن لإيه (ممكن أكتر من حاجة):</p>
+        <p class="note-s">اختار هو أدمن لأنهي صف ومادة (ممكن أكتر من حاجة):</p>
         <div id="stuGrants"></div>
         <div class="msg" id="stuAdminMsg" role="alert"></div>
         <button class="btn" id="stuAdminSave" type="button">تعيين</button>
@@ -1460,15 +1460,21 @@
 
     let currentRole = null;   // دور المستخدم الحالي (أو null لو مش أدمن)
 
-    /* ضيف أدمن (guest): صلاحيات حسب المادة. الشكل: 'community:arabic' أو 'content:science'
-       community = تحكم كامل في مجتمع المادة (كل الصفوف) | content = إدارة محتوى المادة دي بس */
+    /* ضيف أدمن (guest): صلاحيات حسب الصف والمادة. الشكل: 'community:0_arabic' أو 'content:2_science'
+       (رقم الصف 0..3 ثم المادة). community = تحكم كامل في مجتمع الصف/المادة | content = إدارة محتواهم بس.
+       الشكل القديم 'community:arabic' (كل الصفوف) بيتحوّل تلقائي */
+    const expandGrants = list => (list || []).flatMap(g => {
+      const m = /^(community|content):([a-z]+)$/.exec(g);
+      return m ? GRADES.map((_, i) => m[1] + ':' + i + '_' + m[2]) : [g];
+    });
     let myGrants = new Set();
     /* المدير الرئيسي الوحيد: الإيميل ده بس هو اللي يضيف ويشيل الأدمن والضيوف */
     const isOwner    = () => currentRole === 'owner' && (auth.currentUser?.email || '').toLowerCase() === OWNER_EMAIL;
-    const hasGrant   = (kind, subj) => currentRole === 'guest' && myGrants.has(kind + ':' + subj);
-    const commPower  = cid => currentRole === 'owner' || hasGrant('community', String(cid).split('_')[1]);
+    const hasGrant   = (kind, grade, subj) => currentRole === 'guest' && myGrants.has(kind + ':' + grade + '_' + subj);
+    const anyGrant   = kind => currentRole === 'guest' && [...myGrants].some(g => g.startsWith(kind + ':'));
+    const commPower  = cid => currentRole === 'owner' || (currentRole === 'guest' && myGrants.has('community:' + cid));
     const commMod    = cid => commPower(cid) || currentRole === 'content';
-    const canContent = subj => currentRole === 'owner' || currentRole === 'content' || hasGrant('content', subj);
+    const canContent = (grade, subj) => currentRole === 'owner' || currentRole === 'content' || hasGrant('content', grade, subj);
     const staffCommIds = () => communityIds().filter(commMod);
 
     async function getRole(user) {
@@ -1481,7 +1487,7 @@
         const d = snap.data();
         /* مفيش دور 'owner' إلا للإيميل الرئيسي؛ أي مستند تاني بيتحول لأدمن عادي */
         const role = d.role === 'guest' ? 'guest' : 'content';
-        if (role === 'guest') myGrants = new Set(d.grants || []);
+        if (role === 'guest') myGrants = new Set(expandGrants(d.grants));
         return role;
       } catch (e) { return null; }
     }
@@ -1999,9 +2005,8 @@
       document.getElementById('pRole').textContent = ROLE_LABELS[currentRole];
 
       if (currentRole === 'guest') {
-        const subs = SUBJECTS.map(x => x.key);
-        panelTabs = [...(subs.some(k => hasGrant('community', k)) ? ['communities'] : []),
-                     ...(subs.some(k => hasGrant('content', k)) ? ['content'] : [])];
+        panelTabs = [...(anyGrant('community') ? ['communities'] : []),
+                     ...(anyGrant('content') ? ['content'] : [])];
         if (!panelTabs.length) return toast('مفيش صلاحيات متاحة لحسابك.');
       } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'reports', 'stats', 'admins', 'guests', 'communities', 'content'] : ['communities', 'stats', 'content'];
       const allowed = panelTabs;
@@ -2180,8 +2185,21 @@
 
     /* ---- ضيف أدمن: بيتعيّن من ملف الطالب (تاب الطلاب ← تحكم كامل ← تعيينه ضيف أدمن) ---- */
     const guestList = document.getElementById('guestList');
-    const GRANTS = SUBJECTS.flatMap(x => [['community:' + x.key, 'أدمن مجتمع ' + x.name], ['content:' + x.key, 'أدمن محتوى ' + x.name]]);
-    const grantLabel = g => (GRANTS.find(x => x[0] === g) || [0, g])[1];
+    const KINDS = [['community', 'أدمن مجتمع'], ['content', 'أدمن محتوى']];
+    const grantLabel = g => {
+      const m = /^(community|content):(\d)_([a-z]+)$/.exec(g);
+      const sub = m && SUBJECTS.find(x => x.key === m[3]);
+      return m && sub && GRADES[m[2]] ? (m[1] === 'community' ? 'مجتمع ' : 'محتوى ') + subjectName(+m[2], sub) + ' · ' + GRADES[m[2]].name : g;
+    };
+    /* شبكة اختيار: لكل نوع، صف لكل مادة وجواه الصفوف */
+    const grantsGrid = checked => KINDS.map(([kind, label]) => `
+      <p class="note-s" style="margin:10px 0 2px"><b>${label}:</b></p>
+      ${SUBJECTS.map(sub => `
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px">
+          <b style="min-width:64px">${sub.name}</b>
+          ${GRADES.map((g, i) => { const v = kind + ':' + i + '_' + sub.key;
+            return `<label class="gbox" style="padding:3px 0"><input type="checkbox" value="${v}" ${checked.includes(v) ? 'checked' : ''}> ${g.name}</label>`; }).join('')}
+        </div>`).join('')}`).join('');
     const studentByEmail = email => students.find(x => (x.email || '').toLowerCase() === email);
 
     function renderGuests() {
@@ -2189,7 +2207,7 @@
       guestList.innerHTML = '<p class="note-s">لتعيين ضيف أدمن: افتح الطالب من تاب "الطلاب" واضغط "تحكم كامل" ثم "تعيينه ضيف أدمن".</p>'
         + (rows.length ? rows.map(a => `
         <div class="row" data-id="${esc(a.id)}">
-          <div class="row__info"><b>${esc(studentByEmail(a.id)?.name || a.id)}</b><span>${esc(a.id)} • ${(a.grants || []).map(g => esc(grantLabel(g))).join(' • ') || 'من غير صلاحيات'}</span></div>
+          <div class="row__info"><b>${esc(studentByEmail(a.id)?.name || a.id)}</b><span>${esc(a.id)} • ${expandGrants(a.grants).map(g => esc(grantLabel(g))).join(' • ') || 'من غير صلاحيات'}</span></div>
           <div class="row__acts">
             <button data-act="edit">تعديل</button>
             <button data-act="remove" class="danger">إزالة</button>
@@ -2572,9 +2590,9 @@
 
     function subscribeLessons() {
       stopLessons();
-      lessonForm.hidden = !canContent(view.subject);
+      lessonForm.hidden = !canContent(view.grade, view.subject);
       const filters = [where('grade', '==', view.grade), where('subject', '==', view.subject)];
-      if (!canContent(view.subject)) filters.push(where('visible', '==', true));   // الطالب: الظاهر بس
+      if (!canContent(view.grade, view.subject)) filters.push(where('visible', '==', true));   // الطالب: الظاهر بس
 
       lessonsUnsub = onSnapshot(query(collection(db, 'content'), ...filters), snap => {
         lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -2598,14 +2616,14 @@
             ${l.body ? `<p>${esc(l.body)}</p>` : ''}
             ${yt ? `<div class="video"><iframe src="https://www.youtube.com/embed/${yt}" title="${esc(l.title)}" loading="lazy" allowfullscreen></iframe></div>`
                  : url ? `<a class="link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">افتح الرابط</a>` : ''}
-            ${canContent(view.subject) ? `
+            ${canContent(view.grade, view.subject) ? `
               <div class="row__acts" style="margin-top:12px">
                 <button data-act="toggle">${l.visible ? 'إخفاء' : 'إظهار'}</button>
                 <button data-act="edit">تعديل</button>
                 <button data-act="delete" class="danger">حذف</button>
               </div>` : ''}
           </article>`;
-      }).join('') : `<p class="empty">${canContent(view.subject) ? 'مفيش محتوى هنا. ضيف أول درس من فوق.' : 'لسه مفيش محتوى هنا. هيتضاف قريب.'}</p>`;
+      }).join('') : `<p class="empty">${canContent(view.grade, view.subject) ? 'مفيش محتوى هنا. ضيف أول درس من فوق.' : 'لسه مفيش محتوى هنا. هيتضاف قريب.'}</p>`;
     }
 
     /* ---- الأدمن: إضافة / تعديل / إخفاء / حذف ---- */
@@ -2807,10 +2825,9 @@
     const stuAdminSay = (t, ok) => sheetMsg('stuAdminMsg', t, ok);
 
     function fillStuAdmin() {
-      const a = stuAdminDoc(), g = a?.role === 'guest' ? (a.grants || []) : [];
+      const a = stuAdminDoc(), g = a?.role === 'guest' ? expandGrants(a.grants) : [];
       document.getElementById('stuAdminBox').hidden = !stuEmail() || stuEmail() === OWNER_EMAIL;
-      document.getElementById('stuGrants').innerHTML = GRANTS.map(([v, t]) =>
-        `<label class="gbox"><input type="checkbox" value="${v}" ${g.includes(v) ? 'checked' : ''}> ${t}</label>`).join('');
+      document.getElementById('stuGrants').innerHTML = grantsGrid(g);
       document.getElementById('stuAdminSave').textContent = a ? 'حفظ الصلاحيات' : 'تعيين';
       document.getElementById('stuAdminRemove').hidden = !a;
     }
