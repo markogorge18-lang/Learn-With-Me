@@ -1928,7 +1928,7 @@
       if (view.screen === 'lessons' && !canSubject(view.subject)) { toast('المادة دي اتقفلت عليك.'); show('subjects'); renderSubjects(); }
     }
 
-    onAuthStateChanged(auth, async user => {
+    async function applyUser(user) {
       loginBtn.textContent = user ? 'خروج' : 'دخول';
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
@@ -1954,6 +1954,36 @@
       if (!currentRole) closePanel();
       if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
       else if (view.screen === 'lessons') subscribeLessons();   // الدور اتحدد: حدّث القائمة
+    }
+
+    /* متابعة صلاحيات المستخدم لحظياً: لو المدير ضاف أو شال أو غيّر صلاحياته، بيتحدّث من غير خروج */
+    let roleUnsub = null;
+    const grantsKey = () => JSON.stringify([currentRole, [...myGrants].sort()]);
+
+    onAuthStateChanged(auth, async user => {
+      if (roleUnsub) { roleUnsub(); roleUnsub = null; }
+      await applyUser(user);
+      const email = (user?.email || '').toLowerCase();
+      if (!user || !email || email === OWNER_EMAIL) return;
+
+      let first = true;
+      roleUnsub = onSnapshot(doc(db, 'admins', email), async () => {
+        if (first) { first = false; return; }          // أول نتيجة = الحالة الحالية
+        if (auth.currentUser?.uid !== user.uid) return;
+        const prevRole = currentRole, prevKey = grantsKey();
+        const nowRole = await getRole(user);            // بيحدّث myGrants كمان
+        if (nowRole === prevRole && grantsKey() === prevKey) return;
+
+        if (prevRole && !nowRole) {                     // اتشالت صلاحيات الأدمن
+          const u = await getDoc(doc(db, 'users', user.uid)).catch(() => null);
+          if (!u || !u.exists()) { toast('اتشالت صلاحيات الأدمن من حسابك.'); await signOut(auth); return; }
+        }
+        const panelWasOpen = panel.classList.contains('is-open');
+        if (chat.classList.contains('is-open')) closeChat();
+        await applyUser(user);
+        if (panelWasOpen && currentRole) openPanel();
+        toast(!nowRole ? 'اتشالت صلاحيات الأدمن من حسابك.' : '✅ اتحدّثت صلاحياتك.');
+      }, () => {});
     });
 
     /* ==========================================================
@@ -2033,6 +2063,7 @@
     }
 
     function closePanel() {
+      stopStats();
       unsubs.forEach(u => u());
       unsubs = [];
       closeStudent();
@@ -2052,6 +2083,7 @@
 
     function setTab(key) {
       curTab = key;
+      if (key !== 'stats') stopStats();
       Object.entries(TABS).forEach(([k, [, id]]) =>
         document.getElementById(id).hidden = k !== key);
       renderTabs();
@@ -2387,6 +2419,7 @@
         }
         if (btn.dataset.act === 'del' && confirm('مسح الرسالة؟')) {
           await deleteDoc(doc(db, ...chatBase, 'messages', m.id));
+          if (counts[chatBase[1]] != null) { counts[chatBase[1]]--; renderCommunities(); }
           if (editingId === m.id) cancelEdit();
         }
         if (btn.dataset.act === 'report' && confirm('تبلّغ الإدارة عن الرسالة دي؟')) {
@@ -2841,7 +2874,7 @@
       if (!grants.length)  return stuAdminSay('اختار صلاحية واحدة على الأقل.');
       try {
         await setDoc(doc(db, 'admins', email), { role: 'guest', grants, uid: s.id, createdAt: serverTimestamp() });
-        stuAdminSay('اتحفظت. هتظهر له لما يخرج ويدخل تاني.', true);
+        stuAdminSay('اتحفظت. بتظهر له تلقائي من غير خروج.', true);
       } catch (err) { stuAdminSay(authMessage(err)); }
     });
 
@@ -3448,7 +3481,7 @@
       const r = b && reports.find(x => x.id === b.closest('.row').dataset.id);
       if (!r) return;
       try {
-        if (b.dataset.act === 'del') await deleteDoc(doc(db, 'communities', r.c, 'messages', r.mid));
+        if (b.dataset.act === 'del') { await deleteDoc(doc(db, 'communities', r.c, 'messages', r.mid)); if (counts[r.c] != null) { counts[r.c]--; renderCommunities(); } }
         if (b.dataset.act === 'ban') {
           if (!confirm('حظر ' + r.mname + ' من المجتمع؟')) return;
           await setDoc(doc(db, 'communities', r.c, 'bans', r.muid), { name: r.mname, at: serverTimestamp() });
@@ -3509,12 +3542,14 @@
       if (b) loadStats(+b.dataset.d);
     });
 
-    async function loadStats(n = statDays) {
+    let statsUnsub = null;
+    function stopStats() { if (statsUnsub) statsUnsub(); statsUnsub = null; }
+    function loadStats(n = statDays) {
       statDays = n;
       document.querySelectorAll('#statRange .cb').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.d === n)));
       const box = document.getElementById('statsBox');
-      try {
-        const snap = await getDocs(query(collection(db, 'activity'), where('day', '>=', dayStr(n - 1)), limit(5000)));
+      stopStats();   // لحظي: بيتجدد مع كل نشاط جديد
+      statsUnsub = onSnapshot(query(collection(db, 'activity'), where('day', '>=', dayStr(n - 1)), limit(5000)), snap => {
         const docs = snap.docs.map(d => d.data());
         const days = {}, subj = {}, les = {}; let opens = 0;
         for (let i = n - 1; i >= 0; i--) days[dayStr(i)] = new Set();
@@ -3539,7 +3574,7 @@
           ${top.length ? top.map(l => `<div class="row"><div class="row__info"><b>${esc(l.t)}</b><small>${l.c ? esc(communityLabel(l.c)) : ''}</small></div><span class="chip">${l.n}</span></div>`).join('') : '<p class="empty">لسه مفيش بيانات.</p>'}
           <h3>تفاعل المواد</h3>
           ${subs.map(([c, v], i) => `<div class="row"><div class="row__info"><b>${esc(communityLabel(c))}</b><div class="hbar" style="width:${Math.max(2, v / maxS * 100)}%"></div></div><span class="chip">${v}</span>${i >= subs.length - 3 ? '<span class="pill">الأقل</span>' : ''}</div>`).join('')}`;
-      } catch (err) { box.innerHTML = `<p class="empty">${esc(authMessage(err))}</p>`; }
+      }, err => { box.innerHTML = `<p class="empty">${esc(authMessage(err))}</p>`; });
     }
 
     /* ==========================================================
@@ -3571,6 +3606,43 @@
     pushBtn.addEventListener('click', () => enablePush(false));
 
     buildHome();
+  
+    /* ==========================================================
+       تحديث تلقائي من غير ريفرش
+       1) لو اترفعت نسخة جديدة من الموقع: الصفحة بتتحدّث لوحدها (إلا لو بتكتب حاجة، وقتها بتستنى)
+       2) الإحصائيات وكل الشاشات لحظية (Firestore realtime)
+       ========================================================== */
+    (function autoUpdate() {
+      if (!/^https?:$/.test(location.protocol)) return;
+      const hash = t => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h + ':' + t.length; };
+      const typing = () => [...document.querySelectorAll('textarea, input')]
+        .some(el => el.value && el.offsetParent !== null && !['checkbox', 'file', 'hidden', 'radio'].includes(el.type));
+      let base = null, busy = false, told = false;
+      async function check() {
+        if (busy) return;
+        busy = true;
+        try {
+          let r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });   // خفيف: بيقرا الهيدر بس
+          if (!r.ok) return;
+          let v = [r.headers.get('etag'), r.headers.get('last-modified'), r.headers.get('content-length')].filter(Boolean).join('|');
+          if (!v) {                                                                          // السيرفر مش بيبعت هيدر: قارن المحتوى
+            r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+            if (!r.ok) return;
+            v = hash(await r.text());
+          }
+          if (base === null) { base = v; return; }
+          if (v === base) return;
+          if (typing()) { if (!told) { told = true; toast('🔄 في نسخة جديدة، هتتحدّث أول ما تخلّص الكتابة.'); } return; }
+          location.reload();
+        } catch (e) { /* مفيش نت: نحاول بعدين */ }
+        finally { busy = false; }
+      }
+      check();
+      setInterval(check, 4000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+      window.addEventListener('online', check);
+    })();
+
   </script>
 <!-- ===== الملفات المدمجة: الموقع كله في ملف واحد. افتح الصفحة بـ #setup
      لتحميل باقي الملفات (الـ service worker والـ Cloud Function) جاهزة للنشر ===== -->
