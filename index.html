@@ -455,7 +455,25 @@
     }
     .error { min-height: 22px; margin-bottom: 8px; color: var(--pink); font-size: 14px; font-weight: 600; }
     .shake { animation: shake .4s; }
+    .google:disabled { opacity: .45; cursor: not-allowed; }
     #paneAdmin .btn { width: 100%; background: var(--blue); color: #fff; box-shadow: 0 5px 0 #2424b8; }
+
+    /* شاشة استنى موافقة الأدمن */
+    .wait { padding: 20px 0; text-align: center; animation: pane-in .5s cubic-bezier(.2, 1.4, .4, 1); }
+    .wait[hidden] { display: none; }
+    .wait__icon {
+      display: grid; place-items: center; width: 84px; height: 84px; margin: 0 auto 14px;
+      border-radius: 50%; background: var(--lime); color: var(--ink); font-size: 42px;
+      animation: wait-bob 2s ease-in-out infinite;
+    }
+    .wait__dots { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+    .wait__dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); animation: wait-dot 1.2s ease-in-out infinite; }
+    .wait__dots i:nth-child(2) { animation-delay: .2s; }
+    .wait__dots i:nth-child(3) { animation-delay: .4s; }
+    .wait__out { margin-top: 20px; border: 0; background: none; color: var(--mut); font: 500 14px 'IBM Plex Sans Arabic', sans-serif; text-decoration: underline; cursor: pointer; }
+    @keyframes wait-bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
+    @keyframes wait-dot { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.2); } }
+    @media (prefers-reduced-motion: reduce) { .wait__icon, .wait__dots i { animation: none; } }
 
     /* شاشة النجاح */
     .done { padding: 20px 0; text-align: center; animation: pane-in .5s cubic-bezier(.2, 1.4, .4, 1); }
@@ -1103,6 +1121,9 @@
 
         <!-- الطالب: جوجل -->
         <div class="pane" id="paneStudent">
+          <p class="note" style="margin:0 0 8px;font-weight:600">١) اختار صفك الأول:</p>
+          <div class="chips" id="loginGrades"></div>
+          <p class="note" style="margin:0 0 8px;font-weight:600">٢) بعدين سجّل بجوجل:</p>
           <button class="google" id="googleBtn" type="button">
             <svg viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/>
@@ -1148,6 +1169,15 @@
         <button class="btn" type="submit" style="width:100%">يلا نبدأ</button>
       </form>
 
+      <!-- استنى موافقة الأدمن -->
+      <div class="wait" id="waitView" hidden>
+        <div class="wait__icon">⏳</div>
+        <h2>استنى الأدمن يوافق</h2>
+        <p class="sheet__sub">طلب تسجيلك وصل للإدارة. أول ما يوافقوا هتكمّل تلقائي من غير ما تعمل حاجة.</p>
+        <div class="wait__dots"><i></i><i></i><i></i></div>
+        <button class="wait__out" id="waitOut" type="button">خروج</button>
+      </div>
+
       <!-- النجاح -->
       <div class="done" id="done" hidden>
         <div class="done__tick">✓</div>
@@ -1174,6 +1204,7 @@
           <div class="stat"><b id="stBlocked">0</b><span>متوقفين</span></div>
         </div>
         <label class="field"><input class="rtl" id="search" placeholder="دوّر بالاسم أو الإيميل"></label>
+        <div id="pendingBox"></div>
         <div id="studentList"></div>
       </section>
 
@@ -1443,6 +1474,8 @@
 
     /* ---- فتح وقفل النافذة ---- */
     function openLogin(role = 'student') {
+      loginGrade = (typeof wantedGrade === 'number') ? wantedGrade : null;
+      renderLoginGrades();
       showView('login');
       setRole(role);
       modal.classList.add('is-open');
@@ -1451,11 +1484,26 @@
     }
 
     function closeLogin() {
+      if (waiting) { waiting = false; signOut(auth); }          // قفل وهو مستني الموافقة
       if (pendingUser) { signOut(auth); pendingUser = null; }   // قفل قبل كتابة الاسم
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
+
+    /* ---- اختيار الصف قبل جوجل ---- */
+    function renderLoginGrades() {
+      document.getElementById('loginGrades').innerHTML = GRADES.map((g, i) =>
+        `<button type="button" class="cb" data-i="${i}" aria-pressed="${loginGrade === i}">${g.name}</button>`).join('');
+      document.getElementById('googleBtn').disabled = loginGrade === null;
+    }
+    document.getElementById('loginGrades').addEventListener('click', e => {
+      const b = e.target.closest('.cb');
+      if (!b) return;
+      loginGrade = Number(b.dataset.i);
+      wantedGrade = loginGrade;
+      renderLoginGrades();
+    });
 
     /* ---- التبديل بين طالب / أدمن ---- */
     function setRole(role) {
@@ -1498,6 +1546,9 @@
     const nameForm  = document.getElementById('nameView');
     const nameInput = document.getElementById('nameInput');
     const nameError = document.getElementById('nameError');
+    let loginGrade = null;    // الصف اللي الطالب اختاره في نافذة الدخول
+    let signupGrade = null;   // الصف اللي هيتسجل بيه (حساب جديد)
+    let waiting = false;      // الطالب مستني موافقة الأدمن
     let pendingUser = null;   // طالب دخل بجوجل ولسه ما كمّل بياناته
     let pendingExisting = false;   // حساب قديم ناقصه الصورة بس
     let pendingPhoto = null;       // الصورة المختارة (Data URL صغيرة)
@@ -1572,6 +1623,19 @@
       loginView.hidden = view !== 'login';
       nameForm.hidden  = view !== 'name';
       doneView.hidden  = view !== 'done';
+      document.getElementById('waitView').hidden = view !== 'wait';
+    }
+
+    /* ---- استنى موافقة الأدمن: النافذة بتفضل مفتوحة لحد ما يوافق ---- */
+    function showWaiting() {
+      waiting = true;
+      pendingUser = null;
+      if (!modal.classList.contains('is-open')) {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+      showView('wait');
     }
 
     function shake(el) {
@@ -1592,6 +1656,7 @@
         const snap = await getDoc(doc(db, 'users', user.uid));
 
         if (!snap.exists()) {                       // أول مرة: اطلب الصورة والاسم
+          signupGrade = loginGrade;
           showProfileStep(user, null);
           return;
         }
@@ -1600,6 +1665,10 @@
         if (data.blocked) {
           await signOut(auth);
           studentNote.textContent = 'الحساب ده متوقف. كلّم الإدارة.';
+          return;
+        }
+        if (data.approved === false) {              // لسه الأدمن ما وافقش
+          showWaiting();
           return;
         }
         if (!safePhoto(data.photo)) {               // حساب قديم من غير صورة
@@ -1627,17 +1696,25 @@
       }
       const btn = nameForm.querySelector('button[type="submit"]');
       btn.disabled = true;
+      const wasExisting = pendingExisting;
       try {
         if (pendingExisting) {
           await updateDoc(doc(db, 'users', pendingUser.uid), { photo: pendingPhoto });
         } else {
           await setDoc(doc(db, 'users', pendingUser.uid), {
-            name, email: pendingUser.email, role: 'student', blocked: false, photo: pendingPhoto, createdAt: serverTimestamp()
+            name, email: pendingUser.email, role: 'student', blocked: false, approved: false, photo: pendingPhoto, createdAt: serverTimestamp(),
+            grade: signupGrade,
+            // الطالب يشوف الصف اللي اختاره بس. باقي الصفوف مقفولة عليه (الأدمن يقدر يفتحها)
+            ...(signupGrade === null ? {} : { access: { grades: [signupGrade], subjects: SUBJECTS.map(x => x.key) } })
           });
         }
-        myName = name;
         pendingUser = null;
-        showDone('أهلاً بيك يا ' + name.split(' ')[0], pendingExisting ? 'اتحفظت صورتك.' : 'حسابك اتعمل بنجاح.');
+        if (wasExisting) {
+          myName = name;
+          showDone('أهلاً بيك يا ' + name.split(' ')[0], 'اتحفظت صورتك.');
+        } else {
+          showWaiting();                       // حساب جديد: استنى موافقة الأدمن
+        }
       } catch (err) {
         nameError.textContent = authMessage(err);
       } finally { btn.disabled = false; }
@@ -1664,6 +1741,7 @@
     const bellBtn = document.getElementById('bellBtn');
     const bellDot = document.getElementById('bellDot');
 
+    let pendingCount = 0, pendingFirst = true, pendingUnsub = null;   // طلبات تسجيل مستنية (للمدير)
     let myName = null;     // اسم الطالب
     const meAvatar = document.getElementById('meAvatar');
     let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
@@ -1688,7 +1766,17 @@
       studentUnsubs.push(onSnapshot(doc(db, 'users', user.uid), snap => {
         if (!snap.exists()) return;
         const d = snap.data();
-        if (d.blocked) { toast('حسابك اتوقف. كلّم الإدارة.'); signOut(auth); return; }
+        if (d.blocked) { waiting = false; toast('حسابك اتوقف. كلّم الإدارة.'); signOut(auth); return; }
+
+        if (d.approved === false) {            // لسه مستني (أو الأدمن رفض): نفس الشاشة
+          myName = null;
+          if (!waiting) showWaiting();
+          return;
+        }
+        if (waiting) {                         // الأدمن وافق: كمّل
+          waiting = false;
+          showDone('اتقبل حسابك 🎉 أهلاً بيك يا ' + (d.name || 'طالب').split(' ')[0], 'الإدارة وافقت على تسجيلك.');
+        }
         const before = JSON.stringify(myAccess);
         myName = d.name;
         const ph = safePhoto(d.photo);
@@ -1712,6 +1800,23 @@
           first = false;
           updateBell();
         }, () => {}));
+    }
+
+    /* المدير: طلبات تسجيل مستنية (إشعار + عدّاد حتى لو اللوحة مقفولة) */
+    function watchPending() {
+      stopPendingWatch();
+      pendingUnsub = onSnapshot(query(collection(db, 'users'), where('approved', '==', false)), snap => {
+        if (!pendingFirst) snap.docChanges().forEach(c => {
+          if (c.type === 'added') toast('🆕 طالب جديد مستني موافقتك: ' + (c.doc.data().name || ''));
+        });
+        pendingFirst = false;
+        pendingCount = snap.size;
+        updateUnseenUI();
+      }, () => {});
+    }
+    function stopPendingWatch() {
+      if (pendingUnsub) pendingUnsub();
+      pendingUnsub = null; pendingFirst = true; pendingCount = 0;
     }
 
     function stopStudentWatch() { studentUnsubs.forEach(u => u()); studentUnsubs = []; }
@@ -1741,6 +1846,7 @@
 
       panelBtn.hidden = !currentRole;
       if (currentRole) watchCommunities(); else stopCommunityWatch();   // إشعارات الرسايل للأدمن
+      if (currentRole === 'owner') watchPending(); else stopPendingWatch();   // طلبات التسجيل الجديدة
       if (currentRole === 'owner') watchDevNotes(); else stopDevWatch();   // كلمات الطلاب للمطور
       if (!currentRole) closePanel();
       if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
@@ -1826,7 +1932,7 @@
 
     function renderTabs() {
       pTabs.innerHTML = panelTabs.map(k => {
-        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : 0;
+        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : 0;
         return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${k === curTab}">${TABS[k][0]}${n ? ` <span class="pill">${n}</span>` : ''}</button>`;
       }).join('');
     }
@@ -1841,18 +1947,34 @@
     }
 
     /* ---- الطلاب ---- */
+    const gradeTag = s => Number.isInteger(s.grade) && GRADES[s.grade] ? ' • ' + GRADES[s.grade].name : '';
+
     function renderStudents() {
       const q = document.getElementById('search').value.trim().toLowerCase();
-      const list = students
-        .filter(s => !q || (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q))
-        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      const match = s => !q || (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q);
+      const byNew = (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+      const waitingList = students.filter(s => s.approved === false && match(s)).sort(byNew);
+      const list = students.filter(s => s.approved !== false && match(s)).sort(byNew);
 
-      document.getElementById('stTotal').textContent = students.length;
-      document.getElementById('stBlocked').textContent = students.filter(s => s.blocked).length;
+      document.getElementById('stTotal').textContent = students.filter(s => s.approved !== false).length;
+      document.getElementById('stBlocked').textContent = students.filter(s => s.approved !== false && s.blocked).length;
+
+      document.getElementById('pendingBox').innerHTML = waitingList.length ? `
+        <h3 style="margin:6px 0 10px">طلبات التسجيل <span class="pill">${waitingList.length}</span></h3>
+        ${waitingList.map(s => `
+          <div class="row" data-id="${esc(s.id)}">
+            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+            <span class="chip ${s.rejected ? 'chip--off' : ''}">${s.rejected ? 'مرفوض' : 'مستني'}</span>
+            <div class="row__acts">
+              <button data-act="approve">قبول</button>
+              ${s.rejected ? '' : '<button data-act="reject" class="danger">رفض</button>'}
+            </div>
+          </div>`).join('')}
+        <h3 style="margin:18px 0 10px">الطلاب</h3>` : '';
 
       studentList.innerHTML = list.length ? list.map((s, i) => `
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
-          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}</span></div>
+          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
           <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
@@ -1863,6 +1985,23 @@
     studentList.addEventListener('click', e => {
       const btn = e.target.closest('button[data-act="open"]');
       if (btn) openStudent(btn.closest('.row').dataset.id);
+    });
+
+    /* قبول / رفض طلب التسجيل (الرفض: الطالب يفضل على شاشة الانتظار) */
+    document.getElementById('pendingBox').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn || !['approve', 'reject'].includes(btn.dataset.act)) return;
+      const id = btn.closest('.row').dataset.id;
+      btn.disabled = true;
+      try {
+        if (btn.dataset.act === 'approve') {
+          await updateDoc(doc(db, 'users', id), { approved: true, rejected: deleteField() });
+          toast('اتقبل الطالب ✓');
+        } else {
+          await updateDoc(doc(db, 'users', id), { rejected: true });
+          toast('اترفض الطلب');
+        }
+      } catch (err) { btn.disabled = false; dbError(err); }
     });
 
     document.getElementById('search').addEventListener('input', renderStudents);
@@ -2410,7 +2549,7 @@
       const s = stu();
       if (!s) return closeStudent();
       document.getElementById('stuName').textContent = s.name;
-      document.getElementById('stuMail').textContent = s.email;
+      document.getElementById('stuMail').textContent = s.email + gradeTag(s);
       const sp = safePhoto(s.photo), stuPhoto = document.getElementById('stuPhoto');
       stuPhoto.hidden = !sp;
       if (sp) stuPhoto.src = sp;
@@ -2907,7 +3046,7 @@
     document.getElementById('refreshCounts').addEventListener('click', loadCounts);
 
     function updateUnseenUI() {
-      const n = unseenTotal();
+      const n = unseenTotal() + pendingCount;
       panelDot.hidden = n === 0;
       panelDot.textContent = n;
       if (panel.classList.contains('is-open')) renderTabs();
@@ -3031,8 +3170,9 @@
 
     document.getElementById('closeBtn').addEventListener('click', closeLogin);
     document.getElementById('doneBtn').addEventListener('click', () => { closeLogin(); continueFlow(); });
-    modal.addEventListener('click', e => { if (e.target === modal) closeLogin(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogin(); });
+    modal.addEventListener('click', e => { if (e.target === modal && !waiting) closeLogin(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !waiting) closeLogin(); });
+    document.getElementById('waitOut').addEventListener('click', closeLogin);
 
     /* أزرار فتح النافذة */
     loginBtn.addEventListener('click', () => {
