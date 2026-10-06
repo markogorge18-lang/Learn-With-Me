@@ -1253,14 +1253,6 @@
 
       <!-- ضيف أدمن -->
       <section id="tabGuests" hidden>
-        <form class="addbox" id="guestForm" novalidate>
-          <h3>إضافة / تعديل ضيف أدمن</h3>
-          <label class="field"><span>البريد الإلكتروني</span><input type="email" id="gEmail" placeholder="name@example.com"></label>
-          <label class="field"><span>كلمة السر (للحساب الجديد بس، 6 حروف على الأقل)</span><input type="text" id="gPass" autocomplete="off" placeholder="كلمة سر مبدئية"></label>
-          <div id="gGrants"></div>
-          <div class="msg" id="guestMsg" role="alert"></div>
-          <button class="btn" type="submit">حفظ</button>
-        </form>
         <div id="guestList"></div>
       </section>
 
@@ -1375,6 +1367,15 @@
       <div class="addbox">
         <h3>رسايله في المجتمع</h3>
         <button class="btn" id="wipeMsgs" type="button" style="background:var(--pink);box-shadow:0 5px 0 #c93d65">مسح كل رسايله</button>
+      </div>
+
+      <div class="addbox" id="stuAdminBox">
+        <h3>تعيينه ضيف أدمن</h3>
+        <p class="note-s">اختار هو أدمن لإيه (ممكن أكتر من حاجة):</p>
+        <div id="stuGrants"></div>
+        <div class="msg" id="stuAdminMsg" role="alert"></div>
+        <button class="btn" id="stuAdminSave" type="button">تعيين</button>
+        <button class="tool danger" id="stuAdminRemove" type="button" hidden style="width:100%;margin-top:8px">إزالته من الأدمن</button>
       </div>
 
       <div class="addbox">
@@ -2010,11 +2011,13 @@
           students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderStudents();
           renderDevNotes();
+          renderGuests();
         }, panelError));
         unsubs.push(onSnapshot(collection(db, 'admins'), snap => {
           admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderAdmins();
           renderGuests();
+          if (stuId) fillStuAdmin();
         }, panelError));
       }
 
@@ -2175,25 +2178,23 @@
       finally { btn.disabled = false; }
     });
 
-    /* ---- ضيف أدمن: مجتمع و/أو محتوى لكل مادة، ونفس الشخص ينفع ياخد أكتر من صلاحية ---- */
+    /* ---- ضيف أدمن: بيتعيّن من ملف الطالب (تاب الطلاب ← تحكم كامل ← تعيينه ضيف أدمن) ---- */
     const guestList = document.getElementById('guestList');
-    const guestMsg  = document.getElementById('guestMsg');
     const GRANTS = SUBJECTS.flatMap(x => [['community:' + x.key, 'أدمن مجتمع ' + x.name], ['content:' + x.key, 'أدمن محتوى ' + x.name]]);
     const grantLabel = g => (GRANTS.find(x => x[0] === g) || [0, g])[1];
-    document.getElementById('gGrants').innerHTML = GRANTS.map(([v, t]) =>
-      `<label class="gbox"><input type="checkbox" value="${v}"> ${t}</label>`).join('');
-    const gBoxes = () => [...document.querySelectorAll('#gGrants input')];
+    const studentByEmail = email => students.find(x => (x.email || '').toLowerCase() === email);
 
     function renderGuests() {
       const rows = admins.filter(a => a.role === 'guest');
-      guestList.innerHTML = rows.length ? rows.map(a => `
+      guestList.innerHTML = '<p class="note-s">لتعيين ضيف أدمن: افتح الطالب من تاب "الطلاب" واضغط "تحكم كامل" ثم "تعيينه ضيف أدمن".</p>'
+        + (rows.length ? rows.map(a => `
         <div class="row" data-id="${esc(a.id)}">
-          <div class="row__info"><b>${esc(a.id)}</b><span>${(a.grants || []).map(g => esc(grantLabel(g))).join(' • ') || 'من غير صلاحيات'}</span></div>
+          <div class="row__info"><b>${esc(studentByEmail(a.id)?.name || a.id)}</b><span>${esc(a.id)} • ${(a.grants || []).map(g => esc(grantLabel(g))).join(' • ') || 'من غير صلاحيات'}</span></div>
           <div class="row__acts">
-            <button data-act="edit">تعديل الصلاحيات</button>
+            <button data-act="edit">تعديل</button>
             <button data-act="remove" class="danger">إزالة</button>
           </div>
-        </div>`).join('') : '<p class="empty">مفيش ضيوف أدمن لسه.</p>';
+        </div>`).join('') : '<p class="empty">مفيش ضيوف أدمن لسه.</p>');
     }
 
     guestList.addEventListener('click', async e => {
@@ -2203,48 +2204,14 @@
       if (!isOwner()) return toast('للمدير الرئيسي بس.');
       try {
         if (btn.dataset.act === 'edit') {
-          const g = admins.find(a => a.id === email)?.grants || [];
-          document.getElementById('gEmail').value = email;
-          gBoxes().forEach(b => b.checked = g.includes(b.value));
-          document.getElementById('guestForm').scrollIntoView({ behavior: 'smooth' });
+          const st = studentByEmail(email);
+          if (st) openStudent(st.id); else toast('مش لاقي طالب بالإيميل ده.');
         }
         if (btn.dataset.act === 'remove' && confirm('إزالة ' + email + ' من ضيوف الأدمن؟')) {
           await deleteDoc(doc(db, 'admins', email));
           toast('اتشال الضيف');
         }
       } catch (err) { dbError(err); }
-    });
-
-    document.getElementById('guestForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const email  = document.getElementById('gEmail').value.trim().toLowerCase();
-      const pass   = document.getElementById('gPass').value;
-      const grants = gBoxes().filter(b => b.checked).map(b => b.value);
-      const say = (text, ok) => { guestMsg.textContent = text; guestMsg.className = 'msg' + (ok ? ' ok' : ''); };
-      const known = admins.some(a => a.id === email);   // موجود قبل كده: تعديل صلاحيات بس
-
-      if (!/^\S+@\S+\.\S+$/.test(email)) return say('اكتب بريد إلكتروني صحيح.');
-      if (!isOwner())                    return say('إضافة الضيوف للمدير الرئيسي بس.');
-      if (email === OWNER_EMAIL)         return say('ده إيميل المدير.');
-      if (!grants.length)                return say('اختار صلاحية واحدة على الأقل.');
-      if (!known && pass.length < 6)     return say('كلمة السر 6 حروف على الأقل.');
-
-      const btn = e.target.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      try {
-        let msg = 'اتحفظت الصلاحيات.';
-        if (!known) {
-          const second = getApps().find(a => a.name === 'second') || initializeApp(firebaseConfig, 'second');
-          const secondAuth = getAuth(second);
-          try { await createUserWithEmailAndPassword(secondAuth, email, pass); msg = 'اتضاف ضيف الأدمن.'; }
-          catch (err) { if (err.code !== 'auth/email-already-in-use') throw err; }
-          await signOut(secondAuth);
-        }
-        await setDoc(doc(db, 'admins', email), { role: 'guest', grants, createdAt: serverTimestamp() });
-        e.target.reset();
-        say(msg, true);
-      } catch (err) { say(authMessage(err)); }
-      finally { btn.disabled = false; }
     });
 
     /* ---- أحداث اللوحة ---- */
@@ -2727,7 +2694,8 @@
       accSel.subjects = new Set(s.access ? s.access.subjects : SUBJECTS.map(x => x.key));
       stuBans = {};
       document.getElementById('sendText').value = '';
-      sheetMsg('sendMsg', ''); sheetMsg('accMsg', '');
+      sheetMsg('sendMsg', ''); sheetMsg('accMsg', ''); sheetMsg('stuAdminMsg', '');
+      fillStuAdmin();
       stuPanel.classList.add('is-open');
       stuPanel.setAttribute('aria-hidden', 'false');
       renderStudentSheet();
@@ -2831,6 +2799,39 @@
     document.getElementById('accSubjects').addEventListener('click', e => {
       const b = e.target.closest('.cb');
       if (b) toggleSet(accSel.subjects, b.dataset.k);
+    });
+
+    /* ---- تعيين الطالب ضيف أدمن ---- */
+    const stuEmail = () => (stu()?.email || '').toLowerCase();
+    const stuAdminDoc = () => admins.find(a => a.id === stuEmail());
+    const stuAdminSay = (t, ok) => sheetMsg('stuAdminMsg', t, ok);
+
+    function fillStuAdmin() {
+      const a = stuAdminDoc(), g = a?.role === 'guest' ? (a.grants || []) : [];
+      document.getElementById('stuAdminBox').hidden = !stuEmail() || stuEmail() === OWNER_EMAIL;
+      document.getElementById('stuGrants').innerHTML = GRANTS.map(([v, t]) =>
+        `<label class="gbox"><input type="checkbox" value="${v}" ${g.includes(v) ? 'checked' : ''}> ${t}</label>`).join('');
+      document.getElementById('stuAdminSave').textContent = a ? 'حفظ الصلاحيات' : 'تعيين';
+      document.getElementById('stuAdminRemove').hidden = !a;
+    }
+
+    document.getElementById('stuAdminSave').addEventListener('click', async () => {
+      const s = stu(), email = stuEmail();
+      const grants = [...document.querySelectorAll('#stuGrants input:checked')].map(b => b.value);
+      if (!isOwner())      return stuAdminSay('للمدير الرئيسي بس.');
+      if (!s || !email)    return;
+      if (s.approved === false) return stuAdminSay('اقبل الطالب الأول.');
+      if (!grants.length)  return stuAdminSay('اختار صلاحية واحدة على الأقل.');
+      try {
+        await setDoc(doc(db, 'admins', email), { role: 'guest', grants, uid: s.id, createdAt: serverTimestamp() });
+        stuAdminSay('اتحفظت. هتظهر له لما يخرج ويدخل تاني.', true);
+      } catch (err) { stuAdminSay(authMessage(err)); }
+    });
+
+    document.getElementById('stuAdminRemove').addEventListener('click', async () => {
+      if (!isOwner() || !confirm('إزالة صلاحيات الأدمن من الطالب ده؟')) return;
+      try { await deleteDoc(doc(db, 'admins', stuEmail())); stuAdminSay('اتشالت صلاحيات الأدمن.', true); }
+      catch (err) { stuAdminSay(authMessage(err)); }
     });
 
     document.getElementById('accSave').addEventListener('click', async () => {
