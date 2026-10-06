@@ -593,7 +593,7 @@
       cursor: pointer;
       box-shadow: 0 8px 24px rgba(255, 92, 138, .45);
       transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
-      animation: fab-in .8s 1.6s cubic-bezier(.2, 1.5, .4, 1) backwards;
+      animation: fab-in .7s .25s cubic-bezier(.2, 1.5, .4, 1) backwards;
     }
     .fab:hover { transform: translateY(-4px) rotate(-2deg); }
     .fab:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
@@ -873,11 +873,11 @@
   <div class="toast" id="toast" role="status"></div>
 
   <!-- ========== المجتمع ========== -->
-  <button class="fab" id="fab">💬 المجتمع</button>
+  <button class="fab" id="fab" hidden>💬 المجتمع</button>
 
   <div class="panel chat" id="chat" aria-hidden="true">
     <div class="panel__bar">
-      <div><h2>المجتمع</h2><span class="chip" id="chatState">مفتوح</span></div>
+      <div><h2 id="chatTitle">المجتمع</h2><span class="chip" id="chatState">مفتوح</span></div>
       <div class="chat__tools">
         <button class="tool" id="lockBtn" hidden>قفل المجموعة</button>
         <button class="tool" id="bansBtn" hidden>المحظورين</button>
@@ -1355,7 +1355,10 @@
     const senderName = () => currentRole ? auth.currentUser.displayName : myName;
     const canWrite = () => currentRole === 'owner' || (!iAmBanned && (!chatClosed || !!currentRole));
 
+    let chatBase = null;   // مسار مجتمع الصف الحالي: ['communities', '0']
+
     async function openCommunity() {
+      if (view.grade === null) return;
       const user = auth.currentUser;
       if (!user) { wantedGrade = null; return openLogin('student'); }
 
@@ -1369,20 +1372,22 @@
       }
 
       closeChat();
-      messages = []; seen = new Set(); firstRender = true;
+      chatBase = ['communities', String(view.grade)];
+      document.getElementById('chatTitle').textContent = 'مجتمع ' + GRADES[view.grade].name;
+      messages = []; seen = new Set(); firstRender = true; chatClosed = false; iAmBanned = false;
       lockBtn.hidden = bansBtn.hidden = currentRole !== 'owner';
       banList.hidden = true;
 
       chatUnsubs.push(onSnapshot(
-        query(collection(db, 'messages'), orderBy('createdAt', 'desc'), limit(100)),
+        query(collection(db, ...chatBase, 'messages'), orderBy('createdAt', 'desc'), limit(100)),
         snap => { messages = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse(); renderChat(); },
         dbError));
-      chatUnsubs.push(onSnapshot(doc(db, 'settings', 'community'),
+      chatUnsubs.push(onSnapshot(doc(db, ...chatBase),
         snap => { chatClosed = !!snap.data()?.closed; updateChatState(); }, dbError));
-      chatUnsubs.push(onSnapshot(doc(db, 'bans', user.uid),
+      chatUnsubs.push(onSnapshot(doc(db, ...chatBase, 'bans', user.uid),
         snap => { iAmBanned = snap.exists(); updateChatState(); }, () => {}));
       if (currentRole === 'owner') {
-        chatUnsubs.push(onSnapshot(collection(db, 'bans'),
+        chatUnsubs.push(onSnapshot(collection(db, ...chatBase, 'bans'),
           snap => { bans = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderBans(); }, dbError));
       }
 
@@ -1463,11 +1468,11 @@
           chatInput.focus();
         }
         if (btn.dataset.act === 'del' && confirm('مسح الرسالة؟')) {
-          await deleteDoc(doc(db, 'messages', m.id));
+          await deleteDoc(doc(db, ...chatBase, 'messages', m.id));
           if (editingId === m.id) cancelEdit();
         }
         if (btn.dataset.act === 'ban' && confirm('حظر ' + m.name + ' من المجتمع؟')) {
-          await setDoc(doc(db, 'bans', m.uid), { name: m.name, at: serverTimestamp() });
+          await setDoc(doc(db, ...chatBase, 'bans', m.uid), { name: m.name, at: serverTimestamp() });
           toast('اتحظر ' + m.name);
         }
       } catch (err) { dbError(err); }
@@ -1487,10 +1492,10 @@
       chatInput.value = '';
       try {
         if (editingId) {
-          await updateDoc(doc(db, 'messages', editingId), { text, edited: true });
+          await updateDoc(doc(db, ...chatBase, 'messages', editingId), { text, edited: true });
           cancelEdit();
         } else {
-          await addDoc(collection(db, 'messages'), {
+          await addDoc(collection(db, ...chatBase, 'messages'), {
             uid: myUid(), name: senderName(), role: currentRole || 'student',
             text, createdAt: serverTimestamp()
           });
@@ -1501,7 +1506,7 @@
     /* ---- المالك: قفل المجموعة والمحظورين ---- */
     lockBtn.addEventListener('click', async () => {
       try {
-        await setDoc(doc(db, 'settings', 'community'), { closed: !chatClosed });
+        await setDoc(doc(db, ...chatBase), { closed: !chatClosed });
         toast(chatClosed ? 'المجموعة اتفتحت' : 'المجموعة اتقفلت');
       } catch (err) { dbError(err); }
     });
@@ -1516,7 +1521,7 @@
     banList.addEventListener('click', async e => {
       const b = e.target.closest('button[data-uid]');
       if (!b) return;
-      try { await deleteDoc(doc(db, 'bans', b.dataset.uid)); toast('اتفك الحظر'); }
+      try { await deleteDoc(doc(db, ...chatBase, 'bans', b.dataset.uid)); toast('اتفك الحظر'); }
       catch (err) { dbError(err); }
     });
 
@@ -1548,6 +1553,7 @@
         el.hidden = key !== name;
         if (key === name) { el.classList.remove('screen-in'); void el.offsetWidth; el.classList.add('screen-in'); }
       });
+      document.getElementById('fab').hidden = name === 'home';   // المجتمع جوة الصف بس
       if (name !== 'lessons') stopLessons();
       window.scrollTo(0, 0);
     }
