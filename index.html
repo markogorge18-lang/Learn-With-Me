@@ -964,6 +964,36 @@
     /* عدّاد صغير (رسايل جديدة) */
     .pill { display: inline-block; min-width: 20px; padding: 0 7px; border-radius: 99px; background: var(--pink); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
     .row .pill { margin-inline-start: 6px; }
+    /* صورة البروفايل */
+    .avatar { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg); border: 2px solid var(--lime); font-size: 18px; vertical-align: middle; }
+    .avatar--sm { width: 34px; height: 34px; font-size: 16px; }
+    .avatar--lg { width: 84px; height: 84px; margin-bottom: 10px; font-size: 36px; }
+    .row__info b .avatar { margin-inline-end: 8px; }
+    .nav__btns { align-items: center; }
+    .avatar-pick { display: grid; place-items: center; margin-bottom: 14px; }
+    .avatar-pick__btn { position: relative; width: 112px; height: 112px; padding: 0; border: 3px dashed var(--blue); border-radius: 50%; background: var(--bg); color: var(--txt); font: 600 13px 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; overflow: hidden; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
+    .avatar-pick__btn:hover { transform: scale(1.05); }
+    .avatar-pick__btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+    .avatar-pick__btn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .avatar-pick__btn span { display: grid; gap: 2px; font-size: 30px; line-height: 1.1; }
+    .avatar-pick__btn small { color: var(--mut); font-size: 12px; }
+    .avatar-pick__btn.has-photo { border-style: solid; }
+
+    /* كلمة للمطور */
+    .dev { margin-bottom: 12px; padding: 14px 16px; border-radius: 22px; background: var(--card); box-shadow: var(--sh); animation: card-in .5s backwards; animation-delay: calc(var(--i, 0) * 50ms); }
+    .dev__head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .dev__head > div { flex: 1; min-width: 0; }
+    .dev__head b { display: block; }
+    .dev__head small { display: block; color: var(--mut); font-size: 12px; word-break: break-all; }
+    .dev__text { white-space: pre-wrap; word-break: break-word; }
+    .dev__reply { margin-top: 10px; padding: 10px 14px; border-radius: 16px; background: var(--bg); border-inline-start: 4px solid var(--blue); white-space: pre-wrap; word-break: break-word; }
+    .dev__reply b { color: var(--blue); }
+    .dev .row__acts { margin-top: 10px; }
+    .dev__quote { margin-bottom: 8px; padding: 8px 12px; border-radius: 14px; background: var(--bg); color: var(--mut); font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+    img.avatar { display: inline-block; }
+    .avatar[hidden], #nameField[hidden], .avatar-pick__btn [hidden] { display: none !important; }
+    .helper__ic--dev { background: var(--pink); box-shadow: 0 5px 0 #c93d65; }
+    .helper__go--dev { background: var(--blue); }
   </style>
 </head>
 
@@ -980,6 +1010,7 @@
     <nav class="nav">
       <div class="logo"><i>L</i><span dir="ltr">Learn With Me</span></div>
       <div class="nav__btns">
+        <img class="avatar" id="meAvatar" alt="" hidden>
         <button class="btn btn--small bell" id="bellBtn" aria-label="الرسايل والتنبيهات" hidden>🔔<span class="dot" id="bellDot" hidden>0</span></button>
         <button class="btn btn--small bell" id="panelBtn" hidden>لوحة التحكم<span class="dot" id="panelDot" hidden>0</span></button>
         <button class="btn btn--small" id="loginBtn">دخول</button>
@@ -1008,6 +1039,17 @@
     <h3 class="sec-title">قسم المساعدين</h3>
     <p class="page__sub">محتاج مساعدة؟ كلّم مساعد على واتساب مباشرة.</p>
     <div id="helperList"></div>
+
+    <!-- كلمة للمطور: بعيد عن الواتساب -->
+    <div id="devSection">
+      <h3 class="sec-title">كلمة للمطور</h3>
+      <p class="page__sub">فكرة، مشكلة، أو شكر؟ اكتبها هنا وهتوصل للمطور مباشرة من غير واتساب، وهيرد عليك هنا.</p>
+      <button class="helper" id="devBtn" style="--i:2">
+        <span class="helper__ic helper__ic--dev">✍️</span>
+        <span><b>اكتب كلمة للمطور</b><small>وشوف ردوده عليك</small></span>
+        <span class="helper__go helper__go--dev">اكتب</span>
+      </button>
+    </div>
   </main>
 
   <!-- ========== شاشة 3: المحتوى ========== -->
@@ -1090,9 +1132,16 @@
 
       <!-- الطالب: اسمه (بعد أول دخول بجوجل) -->
       <form class="pane" id="nameView" hidden novalidate>
-        <h2>اسمك إيه؟</h2>
-        <p class="sheet__sub">الاسم ده هو اللي هيظهر للإدارة على المنصة.</p>
-        <label class="field"><span>الاسم</span>
+        <h2 id="nameTitle">اسمك إيه؟</h2>
+        <p class="sheet__sub" id="nameSub">الاسم والصورة دول هيظهروا للإدارة على المنصة.</p>
+        <div class="avatar-pick">
+          <button type="button" class="avatar-pick__btn" id="avatarBtn" aria-label="اختار صورة البروفايل">
+            <img id="avatarPreview" alt="" hidden>
+            <span id="avatarHint">📷<small>صورة البروفايل</small></span>
+          </button>
+          <input type="file" id="avatarFile" accept="image/*" hidden>
+        </div>
+        <label class="field" id="nameField"><span>الاسم</span>
           <input class="rtl" id="nameInput" maxlength="60" autocomplete="name" placeholder="مثال: أحمد محمد">
         </label>
         <div class="error" id="nameError" role="alert"></div>
@@ -1126,6 +1175,23 @@
         </div>
         <label class="field"><input class="rtl" id="search" placeholder="دوّر بالاسم أو الإيميل"></label>
         <div id="studentList"></div>
+      </section>
+
+      <!-- كلمات الطلاب للمطور -->
+      <section id="tabDevNotes" hidden>
+        <form class="addbox" id="devReplyForm" hidden novalidate>
+          <h3>الرد على <span id="devReplyTo"></span></h3>
+          <p class="dev__quote" id="devReplyQuote"></p>
+          <label class="field"><textarea class="rtl" id="devReplyText" rows="3" maxlength="600" placeholder="اكتب ردك هنا"></textarea></label>
+          <div class="msg" id="devReplyMsg" role="alert"></div>
+          <button class="btn" type="submit" id="devReplySend">إرسال الرد</button>
+          <button class="tool" type="button" id="devReplyCancel" style="width:100%;margin-top:8px">إلغاء</button>
+        </form>
+        <div class="ctl">
+          <span class="note-s" id="devTotal"></span>
+          <button class="cb" type="button" id="devPendingOnly" aria-pressed="false">من غير رد بس</button>
+        </div>
+        <div id="devList"></div>
       </section>
 
       <!-- الأدمن -->
@@ -1200,6 +1266,7 @@
       <button class="close" id="stuClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body">
+      <img class="avatar avatar--lg" id="stuPhoto" alt="" hidden>
       <p class="stu-mail" id="stuMail"></p>
 
       <form class="addbox" id="sendForm" novalidate>
@@ -1252,6 +1319,25 @@
       <button class="close" id="inboxClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body" id="inboxList"></div>
+  </div>
+
+  <!-- ========== كلمة للمطور (الطالب) ========== -->
+  <div class="panel" id="devPanel" aria-hidden="true">
+    <div class="panel__bar">
+      <div><h2>كلمة للمطور</h2></div>
+      <button class="close" id="devClose" aria-label="إغلاق">×</button>
+    </div>
+    <div class="panel__body">
+      <form class="addbox" id="devForm" novalidate>
+        <h3>اكتب كلمتك</h3>
+        <p class="note-s">بتوصل للمطور مباشرة، ورده هيظهر لك هنا وفي 🔔 الرسايل.</p>
+        <label class="field"><textarea class="rtl" id="devText" rows="4" maxlength="600" placeholder="اكتب هنا..."></textarea></label>
+        <div class="msg" id="devMsg" role="alert"></div>
+        <button class="btn" type="submit" id="devSend">إرسال</button>
+      </form>
+      <h3 class="sec-title" style="margin-top:8px">كلماتك</h3>
+      <div id="devMine"></div>
+    </div>
   </div>
 
   <script type="module">
@@ -1412,7 +1498,75 @@
     const nameForm  = document.getElementById('nameView');
     const nameInput = document.getElementById('nameInput');
     const nameError = document.getElementById('nameError');
-    let pendingUser = null;   // طالب دخل بجوجل ولسه ما كتبش اسمه
+    let pendingUser = null;   // طالب دخل بجوجل ولسه ما كمّل بياناته
+    let pendingExisting = false;   // حساب قديم ناقصه الصورة بس
+    let pendingPhoto = null;       // الصورة المختارة (Data URL صغيرة)
+
+    /* ---- صورة البروفايل: تتقص مربعة وتتصغر 160px قبل الحفظ ---- */
+    const avatarBtn     = document.getElementById('avatarBtn');
+    const avatarFile    = document.getElementById('avatarFile');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarHint    = document.getElementById('avatarHint');
+
+    const safePhoto = p => /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p || '') ? p : '';
+
+    function fileToAvatar(file, size = 160) {
+      return new Promise((resolve, reject) => {
+        if (!file || !/^image\//.test(file.type)) return reject(new Error('type'));
+        if (file.size > 15 * 1024 * 1024) return reject(new Error('big'));
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const side = Math.min(img.naturalWidth, img.naturalHeight);
+          const c = document.createElement('canvas');
+          c.width = c.height = size;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, size, size);
+          resolve(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load')); };
+        img.src = url;
+      });
+    }
+
+    function setPendingPhoto(data) {
+      pendingPhoto = data;
+      avatarPreview.hidden = !data;
+      if (data) avatarPreview.src = data; else avatarPreview.removeAttribute('src');
+      avatarHint.hidden = !!data;
+      avatarBtn.classList.toggle('has-photo', !!data);
+    }
+
+    avatarBtn.addEventListener('click', () => avatarFile.click());
+    avatarFile.addEventListener('change', async () => {
+      const f = avatarFile.files[0];
+      avatarFile.value = '';
+      if (!f) return;
+      try {
+        setPendingPhoto(await fileToAvatar(f));
+        nameError.textContent = '';
+      } catch (err) {
+        nameError.textContent = err.message === 'big' ? 'الصورة كبيرة قوي. اختار صورة أصغر.' : 'اختار صورة صحيحة (JPG أو PNG).';
+      }
+    });
+
+    /* شاشة البيانات: جديد (اسم + صورة) أو قديم (صورة بس) */
+    function showProfileStep(user, existingName) {
+      pendingUser = user;
+      pendingExisting = !!existingName;
+      nameInput.value = existingName || '';
+      nameError.textContent = '';
+      setPendingPhoto(null);
+      document.getElementById('nameField').hidden = pendingExisting;
+      document.getElementById('nameTitle').textContent = pendingExisting ? 'ضيف صورتك' : 'كمّل بياناتك';
+      document.getElementById('nameSub').textContent = pendingExisting
+        ? 'لازم صورة بروفايل عشان تكمّل.'
+        : 'اختار صورتك واكتب اسمك. هيظهروا للإدارة على المنصة.';
+      showView('name');
+    }
 
     function showView(view) {
       loginView.hidden = view !== 'login';
@@ -1437,12 +1591,8 @@
         const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
         const snap = await getDoc(doc(db, 'users', user.uid));
 
-        if (!snap.exists()) {                       // أول مرة: اطلب الاسم
-          pendingUser = user;
-          nameInput.value = '';
-          nameError.textContent = '';
-          showView('name');
-          nameInput.focus();
+        if (!snap.exists()) {                       // أول مرة: اطلب الصورة والاسم
+          showProfileStep(user, null);
           return;
         }
 
@@ -1450,6 +1600,10 @@
         if (data.blocked) {
           await signOut(auth);
           studentNote.textContent = 'الحساب ده متوقف. كلّم الإدارة.';
+          return;
+        }
+        if (!safePhoto(data.photo)) {               // حساب قديم من غير صورة
+          showProfileStep(user, data.name || 'طالب');
           return;
         }
         showDone('أهلاً بيك يا ' + data.name.split(' ')[0], 'دخلت بحساب جوجل.');
@@ -1461,21 +1615,32 @@
     nameForm.addEventListener('submit', async e => {
       e.preventDefault();
       const name = nameInput.value.trim().replace(/\s+/g, ' ');
-      if (name.length < 2) {
+      if (!pendingPhoto) {
+        nameError.textContent = 'اختار صورة البروفايل الأول.';
+        shake(nameForm);
+        return;
+      }
+      if (!pendingExisting && name.length < 2) {
         nameError.textContent = 'اكتب اسمك (حرفين على الأقل).';
         shake(nameForm);
         return;
       }
+      const btn = nameForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
       try {
-        await setDoc(doc(db, 'users', pendingUser.uid), {
-          name, email: pendingUser.email, role: 'student', blocked: false, createdAt: serverTimestamp()
-        });
+        if (pendingExisting) {
+          await updateDoc(doc(db, 'users', pendingUser.uid), { photo: pendingPhoto });
+        } else {
+          await setDoc(doc(db, 'users', pendingUser.uid), {
+            name, email: pendingUser.email, role: 'student', blocked: false, photo: pendingPhoto, createdAt: serverTimestamp()
+          });
+        }
         myName = name;
         pendingUser = null;
-        showDone('أهلاً بيك يا ' + name.split(' ')[0], 'حسابك اتعمل بنجاح.');
+        showDone('أهلاً بيك يا ' + name.split(' ')[0], pendingExisting ? 'اتحفظت صورتك.' : 'حسابك اتعمل بنجاح.');
       } catch (err) {
         nameError.textContent = authMessage(err);
-      }
+      } finally { btn.disabled = false; }
     });
 
     /* ---- الأدمن: بريد وكلمة سر ---- */
@@ -1500,6 +1665,7 @@
     const bellDot = document.getElementById('bellDot');
 
     let myName = null;     // اسم الطالب
+    const meAvatar = document.getElementById('meAvatar');
     let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
     let inbox = [];        // تنبيهات ورسايل الإدارة
     let studentUnsubs = [];
@@ -1525,6 +1691,9 @@
         if (d.blocked) { toast('حسابك اتوقف. كلّم الإدارة.'); signOut(auth); return; }
         const before = JSON.stringify(myAccess);
         myName = d.name;
+        const ph = safePhoto(d.photo);
+        meAvatar.hidden = !ph;
+        if (ph) meAvatar.src = ph;
         myAccess = d.access || null;
         if (JSON.stringify(myAccess) !== before) refreshAccess();
       }, () => {}));
@@ -1560,6 +1729,9 @@
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
       myName = null; myAccess = null; inbox = [];
+      meAvatar.hidden = true;
+      document.getElementById('devSection').hidden = !!currentRole;
+      if (!user || currentRole) closeDevPanel();
 
       const isStudent = !!user && !currentRole;
       if (isStudent) watchStudent(user);
@@ -1569,6 +1741,7 @@
 
       panelBtn.hidden = !currentRole;
       if (currentRole) watchCommunities(); else stopCommunityWatch();   // إشعارات الرسايل للأدمن
+      if (currentRole === 'owner') watchDevNotes(); else stopDevWatch();   // كلمات الطلاب للمطور
       if (!currentRole) closePanel();
       if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
       else if (view.screen === 'lessons') subscribeLessons();   // الدور اتحدد: حدّث القائمة
@@ -1586,6 +1759,7 @@
 
     const TABS = {
       students: ['الطلاب', 'tabStudents'],
+      devnotes: ['كلمات الطلاب', 'tabDevNotes'],
       admins:   ['الأدمن', 'tabAdmins'],
       communities: ['المجتمعات', 'tabCommunities'],
       content:  ['المحتوى', 'tabContent']
@@ -1618,13 +1792,14 @@
       closePanel();
       document.getElementById('pRole').textContent = ROLE_LABELS[currentRole];
 
-      panelTabs = currentRole === 'owner' ? ['students', 'admins', 'communities', 'content'] : ['communities', 'content'];
+      panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'admins', 'communities', 'content'] : ['communities', 'content'];
       const allowed = panelTabs;
 
       if (currentRole === 'owner') {
         unsubs.push(onSnapshot(collection(db, 'users'), snap => {
           students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderStudents();
+          renderDevNotes();
         }, panelError));
         unsubs.push(onSnapshot(collection(db, 'admins'), snap => {
           admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1651,7 +1826,7 @@
 
     function renderTabs() {
       pTabs.innerHTML = panelTabs.map(k => {
-        const n = k === 'communities' ? unseenTotal() : 0;
+        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : 0;
         return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${k === curTab}">${TABS[k][0]}${n ? ` <span class="pill">${n}</span>` : ''}</button>`;
       }).join('');
     }
@@ -1662,6 +1837,7 @@
         document.getElementById(id).hidden = k !== key);
       renderTabs();
       if (key === 'communities') { loadCounts(); updateNotifBox(); }
+      if (key === 'devnotes') { renderDevNotes(); markDevSeen(); }
     }
 
     /* ---- الطلاب ---- */
@@ -1676,7 +1852,7 @@
 
       studentList.innerHTML = list.length ? list.map((s, i) => `
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
-          <div class="row__info"><b>${esc(s.name)}</b><span>${esc(s.email)}</span></div>
+          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}</span></div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
           <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
@@ -2235,6 +2411,9 @@
       if (!s) return closeStudent();
       document.getElementById('stuName').textContent = s.name;
       document.getElementById('stuMail').textContent = s.email;
+      const sp = safePhoto(s.photo), stuPhoto = document.getElementById('stuPhoto');
+      stuPhoto.hidden = !sp;
+      if (sp) stuPhoto.src = sp;
       const state = document.getElementById('stuState');
       state.textContent = s.blocked ? 'متوقف' : 'نشط';
       state.className = 'chip' + (s.blocked ? ' chip--off' : '');
@@ -2420,11 +2599,224 @@
     function closeInbox() {
       inboxPanel.classList.remove('is-open');
       inboxPanel.setAttribute('aria-hidden', 'true');
-      if (!panel.classList.contains('is-open') && !chat.classList.contains('is-open')) document.body.style.overflow = '';
+      if (!anyPanelOpen()) document.body.style.overflow = '';
     }
 
     bellBtn.addEventListener('click', openInbox);
     document.getElementById('inboxClose').addEventListener('click', closeInbox);
+
+    /* ==========================================================
+       كلمة للمطور (بعيد عن الواتساب)
+       الطالب : يكتب كلمة ويشوف ردود المطور عليها
+       المالك : تاب "كلمات الطلاب" فيه كل الكلمات وينفع يرد
+       ========================================================== */
+    const whenOf = m => m.createdAt?.toDate?.()
+      .toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) || 'الآن';
+
+    const avatarImg = (photo, cls = '') => {
+      const p = safePhoto(photo);
+      return p ? `<img class="avatar ${cls}" src="${p}" alt="">` : `<span class="avatar ${cls}">👤</span>`;
+    };
+
+    /* ---- الطالب ---- */
+    const devPanel = document.getElementById('devPanel');
+    const devForm  = document.getElementById('devForm');
+    const devText  = document.getElementById('devText');
+    const devMine  = document.getElementById('devMine');
+    let myNotes = [], devMineUnsub = null, lastDevSend = 0;
+
+    const anyPanelOpen = () => [panel, chat, inboxPanel, stuPanel, devPanel].some(el => el.classList.contains('is-open'));
+
+    function renderMyNotes() {
+      devMine.innerHTML = myNotes.length ? myNotes.map((n, i) => `
+        <div class="dev" style="--i:${Math.min(i, 8)}">
+          <p class="dev__text">${esc(n.text)}</p>
+          <div class="m__meta" style="margin-top:4px;color:var(--mut)">${whenOf(n)}</div>
+          ${n.reply
+            ? `<div class="dev__reply"><b>رد المطور:</b> ${esc(n.reply)}</div>`
+            : '<span class="chip chip--off" style="display:inline-block;margin-top:8px">لسه ما اتردش عليها</span>'}
+        </div>`).join('') : '<p class="empty">لسه ما كتبتش حاجة.</p>';
+    }
+
+    function openDevPanel() {
+      const user = auth.currentUser;
+      if (!user) { wantedGrade = null; return openLogin('student'); }
+      if (currentRole) return;
+      stopDevMine();
+      myNotes = [];
+      devText.value = '';
+      sheetMsg('devMsg', '');
+      renderMyNotes();
+      devMineUnsub = onSnapshot(query(collection(db, 'devNotes'), where('uid', '==', user.uid)), snap => {
+        myNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.seconds ?? Infinity) - (a.createdAt?.seconds ?? Infinity));
+        renderMyNotes();
+      }, dbError);
+      devPanel.classList.add('is-open');
+      devPanel.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function stopDevMine() { if (devMineUnsub) devMineUnsub(); devMineUnsub = null; }
+
+    function closeDevPanel() {
+      stopDevMine();
+      devPanel.classList.remove('is-open');
+      devPanel.setAttribute('aria-hidden', 'true');
+      if (!anyPanelOpen()) document.body.style.overflow = '';
+    }
+
+    devForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      const text = devText.value.trim();
+      if (!user || currentRole) return;
+      if (text.length < 3) return sheetMsg('devMsg', 'اكتب كلمتك الأول.');
+      if (Date.now() - lastDevSend < 15000) return sheetMsg('devMsg', 'استنى شوية قبل الكلمة الجاية.');
+      const btn = document.getElementById('devSend');
+      btn.disabled = true;
+      try {
+        if (!myName) myName = await loadStudentName(user);
+        await addDoc(collection(db, 'devNotes'), {
+          uid: user.uid, name: myName || user.displayName || 'طالب', email: user.email || '',
+          text, seen: false, createdAt: serverTimestamp()
+        });
+        lastDevSend = Date.now();
+        devText.value = '';
+        sheetMsg('devMsg', 'وصلت للمطور. شكراً ليك 💙', true);
+      } catch (err) { sheetMsg('devMsg', authMessage(err)); }
+      finally { btn.disabled = false; }
+    });
+
+    document.getElementById('devBtn').addEventListener('click', openDevPanel);
+    document.getElementById('devClose').addEventListener('click', closeDevPanel);
+
+    function renderDevSection() { document.getElementById('devSection').hidden = !!currentRole; }
+    renderDevSection();
+
+    /* ---- المالك ---- */
+    const devListEl   = document.getElementById('devList');
+    const devReplyForm = document.getElementById('devReplyForm');
+    const devReplyText = document.getElementById('devReplyText');
+    let devNotes = [], devUnsub = null, devFirst = true, devOnlyPending = false, replyingId = null;
+
+    const devUnseen = () => devNotes.filter(n => n.seen === false).length;
+
+    function watchDevNotes() {
+      stopDevWatch();
+      devUnsub = onSnapshot(query(collection(db, 'devNotes'), orderBy('createdAt', 'desc'), limit(200)), snap => {
+        devNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (!devFirst) snap.docChanges().forEach(ch => {
+          if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) return;
+          const n = ch.doc.data();
+          const snippet = String(n.text).slice(0, 70);
+          showAlert('✍️ كلمة جديدة من ' + n.name + ': ' + snippet);
+          beep();
+          if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('Learn With Me — كلمة للمطور', { body: n.name + ': ' + snippet });
+          }
+        });
+        devFirst = false;
+        updateUnseenUI();
+        if (curTab === 'devnotes' && panel.classList.contains('is-open')) { renderDevNotes(); markDevSeen(); }
+      }, () => {});
+    }
+
+    function stopDevWatch() {
+      if (devUnsub) devUnsub();
+      devUnsub = null; devNotes = []; devFirst = true; replyingId = null;
+    }
+
+    async function markDevSeen() {
+      const unseenNotes = devNotes.filter(n => n.seen === false);
+      if (!unseenNotes.length) return;
+      try {
+        const batch = writeBatch(db);
+        unseenNotes.forEach(n => batch.update(doc(db, 'devNotes', n.id), { seen: true }));
+        await batch.commit();
+      } catch (e) { /* مش مهم */ }
+    }
+
+    function renderDevNotes() {
+      const pending = devNotes.filter(n => !n.reply).length;
+      document.getElementById('devTotal').textContent = 'الكلمات: ' + devNotes.length + ' · من غير رد: ' + pending;
+      const list = devNotes.filter(n => !devOnlyPending || !n.reply);
+      devListEl.innerHTML = list.length ? list.map((n, i) => `
+        <div class="dev" data-id="${esc(n.id)}" style="--i:${Math.min(i, 8)}">
+          <div class="dev__head">
+            ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm')}
+            <div><b>${esc(n.name)}</b><small>${esc(n.email)} · ${whenOf(n)}</small></div>
+            <span class="chip ${n.reply ? '' : 'chip--off'}">${n.reply ? 'تم الرد' : 'من غير رد'}</span>
+          </div>
+          <p class="dev__text">${esc(n.text)}</p>
+          ${n.reply ? `<div class="dev__reply"><b>ردك:</b> ${esc(n.reply)}</div>` : ''}
+          <div class="row__acts">
+            <button data-act="reply">${n.reply ? 'تعديل الرد' : 'رد'}</button>
+            <button data-act="delete" class="danger">حذف</button>
+          </div>
+        </div>`).join('') : `<p class="empty">${devOnlyPending ? 'كل الكلمات اتردّ عليها.' : 'لسه مفيش كلمات من الطلاب.'}</p>`;
+    }
+
+    function closeReply() {
+      replyingId = null;
+      devReplyForm.hidden = true;
+      devReplyText.value = '';
+      sheetMsg('devReplyMsg', '');
+    }
+
+    devListEl.addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const n = devNotes.find(x => x.id === btn.closest('.dev').dataset.id);
+      if (!n) return;
+      if (btn.dataset.act === 'reply') {
+        replyingId = n.id;
+        document.getElementById('devReplyTo').textContent = n.name;
+        document.getElementById('devReplyQuote').textContent = n.text;
+        devReplyText.value = n.reply || '';
+        sheetMsg('devReplyMsg', '');
+        devReplyForm.hidden = false;
+        devReplyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        devReplyText.focus();
+      }
+      if (btn.dataset.act === 'delete' && confirm('حذف كلمة ' + n.name + '؟')) {
+        try {
+          await deleteDoc(doc(db, 'devNotes', n.id));
+          if (replyingId === n.id) closeReply();
+          toast('اتحذفت');
+        } catch (err) { dbError(err); }
+      }
+    });
+
+    devReplyForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const n = devNotes.find(x => x.id === replyingId);
+      const text = devReplyText.value.trim();
+      if (!n) return closeReply();
+      if (!text) return sheetMsg('devReplyMsg', 'اكتب الرد الأول.');
+      const btn = document.getElementById('devReplySend');
+      btn.disabled = true;
+      try {
+        await updateDoc(doc(db, 'devNotes', n.id), {
+          reply: text, repliedAt: serverTimestamp(), repliedBy: auth.currentUser.email, seen: true
+        });
+        /* يوصل للطالب كإشعار في 🔔 */
+        await addDoc(collection(db, 'users', n.uid, 'inbox'), {
+          type: 'message', from: 'المطور', read: false, createdAt: serverTimestamp(),
+          text: (n.reply ? 'تعديل على رد المطور: ' : 'رد المطور على كلمتك: ') + text
+        });
+        closeReply();
+        toast('الرد اتبعت للطالب');
+      } catch (err) { sheetMsg('devReplyMsg', authMessage(err)); }
+      finally { btn.disabled = false; }
+    });
+
+    document.getElementById('devReplyCancel').addEventListener('click', closeReply);
+    document.getElementById('devPendingOnly').addEventListener('click', e => {
+      devOnlyPending = !devOnlyPending;
+      e.currentTarget.setAttribute('aria-pressed', devOnlyPending);
+      renderDevNotes();
+    });
 
     /* ==========================================================
        دارك / لايت
@@ -2477,7 +2869,8 @@
        ========================================================== */
     let counts = {}, unseen = {}, commUnsubs = [];
     const panelDot = document.getElementById('panelDot');
-    const unseenTotal = () => Object.values(unseen).reduce((a, b) => a + b, 0);
+    const commUnseen = () => Object.values(unseen).reduce((a, b) => a + b, 0);
+    const unseenTotal = () => commUnseen() + devUnseen();
 
     async function loadCounts() {
       try {
