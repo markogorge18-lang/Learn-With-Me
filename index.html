@@ -684,6 +684,8 @@
     .badge { padding: 0 10px; border-radius: 99px; font-size: 11px; font-weight: 600; line-height: 1.7; }
     .badge--owner { background: var(--lime); color: var(--ink); }
     .badge--admin { background: var(--pink); color: #fff; }
+    .gbox { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-weight: 700; }
+    .gbox input { width: 20px; height: 20px; flex: none; }
 
     .chat__composer { padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--card); }
     .chat__row { display: flex; gap: 8px; max-width: 820px; margin: 0 auto; }
@@ -984,6 +986,8 @@
     .row .pill { margin-inline-start: 6px; }
     /* صورة البروفايل */
     .avatar { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg); border: 2px solid var(--lime); font-size: 18px; vertical-align: middle; }
+    .avatar--letter { background: var(--blue); color: #fff; font-weight: 800; border-color: transparent; user-select: none; }
+    #meAvatar, #meLetter { cursor: pointer; }
     .avatar--sm { width: 34px; height: 34px; font-size: 16px; }
     .avatar--lg { width: 84px; height: 84px; margin-bottom: 10px; font-size: 36px; }
     .row__info b .avatar { margin-inline-end: 8px; }
@@ -1012,6 +1016,14 @@
     .avatar[hidden], #nameField[hidden], .avatar-pick__btn [hidden] { display: none !important; }
     .helper__ic--dev { background: var(--pink); box-shadow: 0 5px 0 #c93d65; }
     .helper__go--dev { background: var(--blue); }
+  
+    .chat__pin { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: var(--lime); color: var(--ink); font-size: 13px; font-weight: 600; }
+    .chat__pin span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat__pin button { border: 0; background: none; color: inherit; font: 600 12px 'IBM Plex Sans Arabic', sans-serif; text-decoration: underline; cursor: pointer; }
+    .bars { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin: 10px 0 18px; }
+    .bars i { flex: 1; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--blue); }
+    .hbar { height: 8px; border-radius: 99px; background: var(--blue); margin-top: 4px; }
+    #statsBox h3 { margin: 18px 0 8px; }
   </style>
 </head>
 
@@ -1028,7 +1040,7 @@
     <nav class="nav">
       <div class="logo"><i>L</i><span dir="ltr">Learn With Me</span></div>
       <div class="nav__btns">
-        <img class="avatar" id="meAvatar" alt="" hidden>
+        <img class="avatar" id="meAvatar" alt="" hidden><span class="avatar avatar--letter" id="meLetter" hidden></span>
         <button class="btn btn--small bell" id="bellBtn" aria-label="الرسايل والتنبيهات" hidden>🔔<span class="dot" id="bellDot" hidden>0</span></button>
         <button class="btn btn--small bell" id="panelBtn" hidden>لوحة التحكم<span class="dot" id="panelDot" hidden>0</span></button>
         <button class="btn btn--small" id="loginBtn">دخول</button>
@@ -1052,6 +1064,7 @@
       <h2 id="subjGrade"></h2>
     </div>
     <p class="page__sub">اختار المادة</p>
+    <button class="tool" id="pushBtn" type="button" hidden style="width:100%;margin-bottom:12px">🔔 نبّهني لما ينزل درس جديد</button>
     <div id="subjectList"></div>
 
     <h3 class="sec-title">قسم المساعدين</h3>
@@ -1154,13 +1167,14 @@
       <!-- الطالب: اسمه (بعد أول دخول بجوجل) -->
       <form class="pane" id="nameView" hidden novalidate>
         <h2 id="nameTitle">اسمك إيه؟</h2>
-        <p class="sheet__sub" id="nameSub">الاسم والصورة دول هيظهروا للإدارة على المنصة.</p>
+        <p class="sheet__sub" id="nameSub">الاسم هيظهر للإدارة على المنصة، والصورة اختيارية: لو مفيش صورة هيظهر أول حرف من اسمك.</p>
         <div class="avatar-pick">
           <button type="button" class="avatar-pick__btn" id="avatarBtn" aria-label="اختار صورة البروفايل">
             <img id="avatarPreview" alt="" hidden>
-            <span id="avatarHint">📷<small>صورة البروفايل</small></span>
+            <span id="avatarHint">📷<small>صورة (اختياري)</small></span>
           </button>
           <input type="file" id="avatarFile" accept="image/*" hidden>
+          <button type="button" class="tool" id="avatarClear" hidden style="margin-top:8px">🗑 مسح الصورة</button>
         </div>
         <label class="field" id="nameField"><span>الاسم</span>
           <input class="rtl" id="nameInput" maxlength="60" autocomplete="name" placeholder="مثال: أحمد محمد">
@@ -1237,6 +1251,19 @@
         <div id="adminList"></div>
       </section>
 
+      <!-- ضيف أدمن -->
+      <section id="tabGuests" hidden>
+        <form class="addbox" id="guestForm" novalidate>
+          <h3>إضافة / تعديل ضيف أدمن</h3>
+          <label class="field"><span>البريد الإلكتروني</span><input type="email" id="gEmail" placeholder="name@example.com"></label>
+          <label class="field"><span>كلمة السر (للحساب الجديد بس، 6 حروف على الأقل)</span><input type="text" id="gPass" autocomplete="off" placeholder="كلمة سر مبدئية"></label>
+          <div id="gGrants"></div>
+          <div class="msg" id="guestMsg" role="alert"></div>
+          <button class="btn" type="submit">حفظ</button>
+        </form>
+        <div id="guestList"></div>
+      </section>
+
       <!-- المحتوى -->
       <!-- المجتمعات -->
       <section id="tabCommunities" hidden>
@@ -1250,6 +1277,23 @@
           <button class="tool" id="refreshCounts" type="button">تحديث العدد</button>
         </div>
         <div id="communityList"></div>
+      </section>
+
+      <section id="tabReports" hidden>
+        <div id="reportList"></div>
+        <form class="addbox" id="wordsForm" hidden novalidate>
+          <h3>كلمات ممنوعة في المجتمع</h3>
+          <label class="field"><textarea class="rtl" id="wordsText" rows="3" placeholder="كلمة في كل سطر"></textarea></label>
+          <button class="btn" type="submit">حفظ</button>
+        </form>
+      </section>
+
+      <section id="tabStats" hidden>
+        <div class="chips" id="statRange">
+          <button class="cb" type="button" data-d="7" aria-pressed="true">7 أيام</button>
+          <button class="cb" type="button" data-d="30" aria-pressed="false">30 يوم</button>
+        </div>
+        <div id="statsBox"><p class="empty">بيحمّل...</p></div>
       </section>
 
       <section id="tabContent" hidden>
@@ -1275,6 +1319,7 @@
     </div>
 
     <div class="chat__bans" id="banList" hidden></div>
+    <div class="chat__pin" id="pinBar" hidden></div>
     <div class="chat__list" id="chatList" aria-live="polite"></div>
 
     <form class="chat__composer" id="chatForm">
@@ -1297,7 +1342,7 @@
       <button class="close" id="stuClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body">
-      <img class="avatar avatar--lg" id="stuPhoto" alt="" hidden>
+      <img class="avatar avatar--lg" id="stuPhoto" alt="" hidden><span class="avatar avatar--lg avatar--letter" id="stuLetter" hidden></span>
       <p class="stu-mail" id="stuMail"></p>
 
       <form class="addbox" id="sendForm" novalidate>
@@ -1385,7 +1430,7 @@
     import {
       getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
       collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp,
-      writeBatch, getDocs, getCountFromServer, deleteField
+      writeBatch, getDocs, getCountFromServer, deleteField, increment
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1410,16 +1455,33 @@
        content = أدمن المحتوى: المحتوى بس (يضيفه المدير من اللوحة)
        ========================================================== */
     const OWNER_EMAIL = 'markogoerge123321@gmail.com';
-    const ROLE_LABELS = { owner: 'مدير المنصة', content: 'أدمن المحتوى' };
+    const ROLE_LABELS = { owner: 'مدير المنصة', content: 'أدمن المحتوى', guest: 'ضيف أدمن' };
 
     let currentRole = null;   // دور المستخدم الحالي (أو null لو مش أدمن)
 
+    /* ضيف أدمن (guest): صلاحيات حسب المادة. الشكل: 'community:arabic' أو 'content:science'
+       community = تحكم كامل في مجتمع المادة (كل الصفوف) | content = إدارة محتوى المادة دي بس */
+    let myGrants = new Set();
+    /* المدير الرئيسي الوحيد: الإيميل ده بس هو اللي يضيف ويشيل الأدمن والضيوف */
+    const isOwner    = () => currentRole === 'owner' && (auth.currentUser?.email || '').toLowerCase() === OWNER_EMAIL;
+    const hasGrant   = (kind, subj) => currentRole === 'guest' && myGrants.has(kind + ':' + subj);
+    const commPower  = cid => currentRole === 'owner' || hasGrant('community', String(cid).split('_')[1]);
+    const commMod    = cid => commPower(cid) || currentRole === 'content';
+    const canContent = subj => currentRole === 'owner' || currentRole === 'content' || hasGrant('content', subj);
+    const staffCommIds = () => communityIds().filter(commMod);
+
     async function getRole(user) {
       const email = (user.email || '').toLowerCase();
+      myGrants = new Set();
       if (email === OWNER_EMAIL) return 'owner';
       try {
         const snap = await getDoc(doc(db, 'admins', email));
-        return snap.exists() ? snap.data().role : null;
+        if (!snap.exists()) return null;
+        const d = snap.data();
+        /* مفيش دور 'owner' إلا للإيميل الرئيسي؛ أي مستند تاني بيتحول لأدمن عادي */
+        const role = d.role === 'guest' ? 'guest' : 'content';
+        if (role === 'guest') myGrants = new Set(d.grants || []);
+        return role;
       } catch (e) { return null; }
     }
 
@@ -1559,6 +1621,7 @@
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarHint    = document.getElementById('avatarHint');
 
+    const initial = n => ([...String(n || '').trim()][0] || '?').toUpperCase();
     const safePhoto = p => /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p || '') ? p : '';
 
     function fileToAvatar(file, size = 160) {
@@ -1589,7 +1652,9 @@
       if (data) avatarPreview.src = data; else avatarPreview.removeAttribute('src');
       avatarHint.hidden = !!data;
       avatarBtn.classList.toggle('has-photo', !!data);
+      document.getElementById('avatarClear').hidden = !data;
     }
+    document.getElementById('avatarClear').addEventListener('click', () => setPendingPhoto(null));
 
     avatarBtn.addEventListener('click', () => avatarFile.click());
     avatarFile.addEventListener('change', async () => {
@@ -1671,10 +1736,6 @@
           showWaiting();
           return;
         }
-        if (!safePhoto(data.photo)) {               // حساب قديم من غير صورة
-          showProfileStep(user, data.name || 'طالب');
-          return;
-        }
         showDone('أهلاً بيك يا ' + data.name.split(' ')[0], 'دخلت بحساب جوجل.');
       } catch (err) {
         if (err.code !== 'auth/cancelled-popup-request') studentNote.textContent = authMessage(err);
@@ -1684,11 +1745,6 @@
     nameForm.addEventListener('submit', async e => {
       e.preventDefault();
       const name = nameInput.value.trim().replace(/\s+/g, ' ');
-      if (!pendingPhoto) {
-        nameError.textContent = 'اختار صورة البروفايل الأول.';
-        shake(nameForm);
-        return;
-      }
       if (!pendingExisting && name.length < 2) {
         nameError.textContent = 'اكتب اسمك (حرفين على الأقل).';
         shake(nameForm);
@@ -1699,10 +1755,10 @@
       const wasExisting = pendingExisting;
       try {
         if (pendingExisting) {
-          await updateDoc(doc(db, 'users', pendingUser.uid), { photo: pendingPhoto });
+          await updateDoc(doc(db, 'users', pendingUser.uid), { photo: pendingPhoto || '' });
         } else {
           await setDoc(doc(db, 'users', pendingUser.uid), {
-            name, email: pendingUser.email, role: 'student', blocked: false, approved: false, photo: pendingPhoto, createdAt: serverTimestamp(),
+            name, email: pendingUser.email, role: 'student', blocked: false, approved: false, photo: pendingPhoto || '', createdAt: serverTimestamp(),
             grade: signupGrade,
             // الطالب يشوف الصف اللي اختاره بس. باقي الصفوف مقفولة عليه (الأدمن يقدر يفتحها)
             ...(signupGrade === null ? {} : { access: { grades: [signupGrade], subjects: SUBJECTS.map(x => x.key) } })
@@ -1711,7 +1767,7 @@
         pendingUser = null;
         if (wasExisting) {
           myName = name;
-          showDone('أهلاً بيك يا ' + name.split(' ')[0], 'اتحفظت صورتك.');
+          showDone('أهلاً بيك يا ' + name.split(' ')[0], 'اتحفظ حسابك.');
         } else {
           showWaiting();                       // حساب جديد: استنى موافقة الأدمن
         }
@@ -1741,9 +1797,43 @@
     const bellBtn = document.getElementById('bellBtn');
     const bellDot = document.getElementById('bellDot');
 
+    let reportCount = 0, reports = [], reportsUnsub = null, badWords = [], badUnsub = null;
     let pendingCount = 0, pendingFirst = true, pendingUnsub = null;   // طلبات تسجيل مستنية (للمدير)
     let myName = null;     // اسم الطالب
     const meAvatar = document.getElementById('meAvatar');
+    const meLetter = document.getElementById('meLetter');
+
+    /* تغيير / مسح صورة الطالب (بالضغط على صورته أو الحرف في الأعلى) */
+    let avMenu = null;
+    const closeAvMenu = () => { if (avMenu) avMenu.remove(); avMenu = null; };
+    function openAvMenu() {
+      if (avMenu) return closeAvMenu();
+      const hasPhoto = !meAvatar.hidden;
+      avMenu = document.createElement('div');
+      avMenu.style.cssText = 'position:fixed;top:64px;inset-inline-start:12px;z-index:9999;display:grid;gap:8px;padding:10px;background:var(--bg);color:var(--txt);border:3px solid var(--txt);border-radius:14px';
+      avMenu.innerHTML = '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>' + (hasPhoto ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '');
+      avMenu.addEventListener('click', async e => {
+        const a = e.target.closest('button')?.dataset.a;
+        if (!a) return;
+        const ref = doc(db, 'users', auth.currentUser.uid);
+        closeAvMenu();
+        try {
+          if (a === 'del') { await updateDoc(ref, { photo: '' }); toast('اتمسحت الصورة'); }
+          if (a === 'pick') {
+            const f = document.createElement('input');
+            f.type = 'file'; f.accept = 'image/*';
+            f.onchange = async () => {
+              try { await updateDoc(ref, { photo: await fileToAvatar(f.files[0]) }); toast('اتحفظت الصورة'); }
+              catch (err) { toast(err.message === 'big' ? 'الصورة كبيرة قوي.' : err.code ? authMessage(err) : 'اختار صورة صحيحة.'); }
+            };
+            f.click();
+          }
+        } catch (err) { dbError(err); }
+      });
+      document.body.appendChild(avMenu);
+    }
+    [meAvatar, meLetter].forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openAvMenu(); }));
+    document.addEventListener('click', e => { if (avMenu && !avMenu.contains(e.target)) closeAvMenu(); });
     let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
     let inbox = [];        // تنبيهات ورسايل الإدارة
     let studentUnsubs = [];
@@ -1782,6 +1872,8 @@
         const ph = safePhoto(d.photo);
         meAvatar.hidden = !ph;
         if (ph) meAvatar.src = ph;
+        meLetter.hidden = !!ph;
+        meLetter.textContent = initial(d.name);
         myAccess = d.access || null;
         if (JSON.stringify(myAccess) !== before) refreshAccess();
       }, () => {}));
@@ -1834,7 +1926,7 @@
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
       myName = null; myAccess = null; inbox = [];
-      meAvatar.hidden = true;
+      meAvatar.hidden = true; meLetter.hidden = true; closeAvMenu();
       document.getElementById('devSection').hidden = !!currentRole;
       if (!user || currentRole) closeDevPanel();
 
@@ -1847,6 +1939,10 @@
       panelBtn.hidden = !currentRole;
       if (currentRole) watchCommunities(); else stopCommunityWatch();   // إشعارات الرسايل للأدمن
       if (currentRole === 'owner') watchPending(); else stopPendingWatch();   // طلبات التسجيل الجديدة
+      if (currentRole === 'owner') watchReports(); else stopReportWatch();    // بلاغات المجتمع: للمدير الرئيسي بس
+      if (user) watchBadWords(); else { if (badUnsub) badUnsub(); badUnsub = null; badWords = []; }
+      if (isStudent) { track({}); if ('Notification' in window && Notification.permission === 'granted') enablePush(true); }
+      pushBtn.hidden = !(isStudent && VAPID_KEY && 'Notification' in window && Notification.permission === 'default');
       if (currentRole === 'owner') watchDevNotes(); else stopDevWatch();   // كلمات الطلاب للمطور
       if (!currentRole) closePanel();
       if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
@@ -1867,7 +1963,10 @@
       students: ['الطلاب', 'tabStudents'],
       devnotes: ['كلمات الطلاب', 'tabDevNotes'],
       admins:   ['الأدمن', 'tabAdmins'],
+      guests:   ['ضيف أدمن', 'tabGuests'],
       communities: ['المجتمعات', 'tabCommunities'],
+      reports:  ['البلاغات', 'tabReports'],
+      stats:    ['الإحصائيات', 'tabStats'],
       content:  ['المحتوى', 'tabContent']
     };
 
@@ -1898,7 +1997,12 @@
       closePanel();
       document.getElementById('pRole').textContent = ROLE_LABELS[currentRole];
 
-      panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'admins', 'communities', 'content'] : ['communities', 'content'];
+      if (currentRole === 'guest') {
+        const subs = SUBJECTS.map(x => x.key);
+        panelTabs = [...(subs.some(k => hasGrant('community', k)) ? ['communities'] : []),
+                     ...(subs.some(k => hasGrant('content', k)) ? ['content'] : [])];
+        if (!panelTabs.length) return toast('مفيش صلاحيات متاحة لحسابك.');
+      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'reports', 'stats', 'admins', 'guests', 'communities', 'content'] : ['communities', 'stats', 'content'];
       const allowed = panelTabs;
 
       if (currentRole === 'owner') {
@@ -1910,6 +2014,7 @@
         unsubs.push(onSnapshot(collection(db, 'admins'), snap => {
           admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderAdmins();
+          renderGuests();
         }, panelError));
       }
 
@@ -1932,7 +2037,7 @@
 
     function renderTabs() {
       pTabs.innerHTML = panelTabs.map(k => {
-        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : 0;
+        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : k === 'reports' ? reportCount : 0;
         return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${k === curTab}">${TABS[k][0]}${n ? ` <span class="pill">${n}</span>` : ''}</button>`;
       }).join('');
     }
@@ -1944,6 +2049,8 @@
       renderTabs();
       if (key === 'communities') { loadCounts(); updateNotifBox(); }
       if (key === 'devnotes') { renderDevNotes(); markDevSeen(); }
+      if (key === 'reports') renderReports();
+      if (key === 'stats') loadStats(statDays);
     }
 
     /* ---- الطلاب ---- */
@@ -1963,7 +2070,7 @@
         <h3 style="margin:6px 0 10px">طلبات التسجيل <span class="pill">${waitingList.length}</span></h3>
         ${waitingList.map(s => `
           <div class="row" data-id="${esc(s.id)}">
-            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name)}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
             <span class="chip ${s.rejected ? 'chip--off' : ''}">${s.rejected ? 'مرفوض' : 'مستني'}</span>
             <div class="row__acts">
               <button data-act="approve">قبول</button>
@@ -1974,7 +2081,7 @@
 
       studentList.innerHTML = list.length ? list.map((s, i) => `
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
-          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm')}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name)}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
           <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
@@ -2008,7 +2115,7 @@
 
     /* ---- الأدمن ---- */
     function renderAdmins() {
-      const rows = [{ id: OWNER_EMAIL, role: 'owner' }, ...admins.filter(a => a.id !== OWNER_EMAIL)];
+      const rows = [{ id: OWNER_EMAIL, role: 'owner' }, ...admins.filter(a => a.id !== OWNER_EMAIL && a.role !== 'guest')];
       adminList.innerHTML = rows.map((a, i) => `
         <div class="row" data-id="${esc(a.id)}" style="--i:${Math.min(i, 8)}">
           <div class="row__info"><b>${ROLE_LABELS[a.role] || 'أدمن'}</b><span>${esc(a.id)}</span></div>
@@ -2024,6 +2131,7 @@
       const btn = e.target.closest('button[data-act]');
       if (!btn) return;
       const email = btn.closest('.row').dataset.id;
+      if (!isOwner()) return toast('للمدير الرئيسي بس.');
       try {
         if (btn.dataset.act === 'reset') {
           await sendPasswordResetEmail(auth, email);
@@ -2043,6 +2151,7 @@
       const say = (text, ok) => { adminMsg.textContent = text; adminMsg.className = 'msg' + (ok ? ' ok' : ''); };
 
       if (!/^\S+@\S+\.\S+$/.test(email)) return say('اكتب بريد إلكتروني صحيح.');
+      if (!isOwner())                    return say('إضافة الأدمن للمدير الرئيسي بس.');
       if (email === OWNER_EMAIL)         return say('ده إيميل المدير.');
       if (pass.length < 6)               return say('كلمة السر 6 حروف على الأقل.');
 
@@ -2060,6 +2169,78 @@
         }
         await signOut(secondAuth);
         await setDoc(doc(db, 'admins', email), { role: 'content', createdAt: serverTimestamp() });
+        e.target.reset();
+        say(msg, true);
+      } catch (err) { say(authMessage(err)); }
+      finally { btn.disabled = false; }
+    });
+
+    /* ---- ضيف أدمن: مجتمع و/أو محتوى لكل مادة، ونفس الشخص ينفع ياخد أكتر من صلاحية ---- */
+    const guestList = document.getElementById('guestList');
+    const guestMsg  = document.getElementById('guestMsg');
+    const GRANTS = SUBJECTS.flatMap(x => [['community:' + x.key, 'أدمن مجتمع ' + x.name], ['content:' + x.key, 'أدمن محتوى ' + x.name]]);
+    const grantLabel = g => (GRANTS.find(x => x[0] === g) || [0, g])[1];
+    document.getElementById('gGrants').innerHTML = GRANTS.map(([v, t]) =>
+      `<label class="gbox"><input type="checkbox" value="${v}"> ${t}</label>`).join('');
+    const gBoxes = () => [...document.querySelectorAll('#gGrants input')];
+
+    function renderGuests() {
+      const rows = admins.filter(a => a.role === 'guest');
+      guestList.innerHTML = rows.length ? rows.map(a => `
+        <div class="row" data-id="${esc(a.id)}">
+          <div class="row__info"><b>${esc(a.id)}</b><span>${(a.grants || []).map(g => esc(grantLabel(g))).join(' • ') || 'من غير صلاحيات'}</span></div>
+          <div class="row__acts">
+            <button data-act="edit">تعديل الصلاحيات</button>
+            <button data-act="remove" class="danger">إزالة</button>
+          </div>
+        </div>`).join('') : '<p class="empty">مفيش ضيوف أدمن لسه.</p>';
+    }
+
+    guestList.addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      const email = btn.closest('.row').dataset.id;
+      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      try {
+        if (btn.dataset.act === 'edit') {
+          const g = admins.find(a => a.id === email)?.grants || [];
+          document.getElementById('gEmail').value = email;
+          gBoxes().forEach(b => b.checked = g.includes(b.value));
+          document.getElementById('guestForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        if (btn.dataset.act === 'remove' && confirm('إزالة ' + email + ' من ضيوف الأدمن؟')) {
+          await deleteDoc(doc(db, 'admins', email));
+          toast('اتشال الضيف');
+        }
+      } catch (err) { dbError(err); }
+    });
+
+    document.getElementById('guestForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email  = document.getElementById('gEmail').value.trim().toLowerCase();
+      const pass   = document.getElementById('gPass').value;
+      const grants = gBoxes().filter(b => b.checked).map(b => b.value);
+      const say = (text, ok) => { guestMsg.textContent = text; guestMsg.className = 'msg' + (ok ? ' ok' : ''); };
+      const known = admins.some(a => a.id === email);   // موجود قبل كده: تعديل صلاحيات بس
+
+      if (!/^\S+@\S+\.\S+$/.test(email)) return say('اكتب بريد إلكتروني صحيح.');
+      if (!isOwner())                    return say('إضافة الضيوف للمدير الرئيسي بس.');
+      if (email === OWNER_EMAIL)         return say('ده إيميل المدير.');
+      if (!grants.length)                return say('اختار صلاحية واحدة على الأقل.');
+      if (!known && pass.length < 6)     return say('كلمة السر 6 حروف على الأقل.');
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      try {
+        let msg = 'اتحفظت الصلاحيات.';
+        if (!known) {
+          const second = getApps().find(a => a.name === 'second') || initializeApp(firebaseConfig, 'second');
+          const secondAuth = getAuth(second);
+          try { await createUserWithEmailAndPassword(secondAuth, email, pass); msg = 'اتضاف ضيف الأدمن.'; }
+          catch (err) { if (err.code !== 'auth/email-already-in-use') throw err; }
+          await signOut(secondAuth);
+        }
+        await setDoc(doc(db, 'admins', email), { role: 'guest', grants, createdAt: serverTimestamp() });
         e.target.reset();
         say(msg, true);
       } catch (err) { say(authMessage(err)); }
@@ -2095,7 +2276,8 @@
 
     const myUid = () => auth.currentUser?.uid;
     const senderName = () => currentRole ? auth.currentUser.displayName : myName;
-    const canWrite = () => currentRole === 'owner' || (!iAmBanned && (!chatClosed || !!currentRole));
+    const chatPower = () => !!chatBase && commPower(chatBase[1]);
+    const canWrite = () => currentRole === 'owner' || chatPower() || (!iAmBanned && (!chatClosed || currentRole === 'content'));
 
     let chatBase = null;   // مسار مجتمع المادة الحالية: ['communities', '0_arabic']
 
@@ -2119,7 +2301,7 @@
       unseen[chatBase[1]] = 0;               // الأدمن شاف الرسايل
       updateUnseenUI();
       messages = []; seen = new Set(); firstRender = true; chatClosed = false; iAmBanned = false;
-      lockBtn.hidden = bansBtn.hidden = currentRole !== 'owner';
+      lockBtn.hidden = bansBtn.hidden = !chatPower();
       banList.hidden = true;
 
       chatUnsubs.push(onSnapshot(
@@ -2128,9 +2310,13 @@
         dbError));
       chatUnsubs.push(onSnapshot(doc(db, ...chatBase),
         snap => { chatClosed = !!snap.data()?.closed; updateChatState(); }, dbError));
+      chatUnsubs.push(onSnapshot(doc(db, ...chatBase, 'pins', 'current'), snap => {
+        pinBar.hidden = !snap.exists();
+        if (snap.exists()) pinBar.innerHTML = '📌 <span>' + esc(snap.data().name) + ': ' + esc(snap.data().text) + '</span>' + (chatPower() || currentRole === 'content' ? '<button>فك التثبيت</button>' : '');
+      }, () => {}));
       chatUnsubs.push(onSnapshot(doc(db, ...chatBase, 'bans', user.uid),
         snap => { iAmBanned = snap.exists(); updateChatState(); }, () => {}));
-      if (currentRole === 'owner') {
+      if (chatPower()) {
         chatUnsubs.push(onSnapshot(collection(db, ...chatBase, 'bans'),
           snap => { bans = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderBans(); }, dbError));
       }
@@ -2156,7 +2342,7 @@
 
       const ok = canWrite();
       chatInput.disabled = sendBtn.disabled = !ok;
-      chatInput.placeholder = iAmBanned && currentRole !== 'owner' ? 'انت محظور من المجتمع.'
+      chatInput.placeholder = iAmBanned && !chatPower() ? 'انت محظور من المجتمع.'
                             : !ok ? 'المجموعة مقفولة حالياً.'
                             : 'اكتب رسالة...';
       renderChat();
@@ -2174,11 +2360,12 @@
         const mine = m.uid === myUid();
         const isNew = !firstRender && !seen.has(m.id);
         const badge = m.role === 'owner' ? '<span class="badge badge--owner">👑 المالك</span>'
-                    : m.role === 'content' ? '<span class="badge badge--admin">أدمن</span>' : '';
+                    : (m.role === 'content' || m.role === 'guest') ? '<span class="badge badge--admin">أدمن</span>' : '';
 
         const canEdit = mine && canWrite();
-        const canDelete = mine || currentRole === 'owner' || (currentRole === 'content' && m.role === 'student');
-        const canBan = currentRole === 'owner' && !mine && m.role !== 'owner';
+        const canDelete = mine || chatPower() || (currentRole === 'content' && m.role === 'student');
+        const canBan = chatPower() && !mine && m.role !== 'owner';
+        const canReport = !currentRole && !mine && m.role === 'student';
 
         return `
           <div class="m ${mine ? 'm--me' : ''} ${isNew ? 'm--new' : ''}" data-id="${esc(m.id)}">
@@ -2189,6 +2376,8 @@
               ${canEdit ? '<button data-act="edit">تعديل</button>' : ''}
               ${canDelete ? '<button data-act="del">مسح</button>' : ''}
               ${canBan ? '<button data-act="ban">حظر</button>' : ''}
+              ${canReport ? '<button data-act="report">إبلاغ</button>' : ''}
+              ${chatPower() || currentRole === 'content' ? '<button data-act="pin">تثبيت</button>' : ''}
             </div>
           </div>`;
       }).join('') : '<p class="empty">ابدأ أول رسالة في المجتمع.</p>';
@@ -2215,6 +2404,16 @@
           await deleteDoc(doc(db, ...chatBase, 'messages', m.id));
           if (editingId === m.id) cancelEdit();
         }
+        if (btn.dataset.act === 'report' && confirm('تبلّغ الإدارة عن الرسالة دي؟')) {
+          await setDoc(doc(db, 'reports', chatBase[1] + '_' + m.id + '_' + myUid()), {
+            c: chatBase[1], mid: m.id, muid: m.uid, mname: m.name, text: String(m.text).slice(0, 200),
+            ruid: myUid(), rname: myName || '', status: 'open', createdAt: serverTimestamp() });
+          toast('وصل البلاغ للإدارة. شكراً.');
+        }
+        if (btn.dataset.act === 'pin') {
+          await setDoc(doc(db, ...chatBase, 'pins', 'current'), { name: m.name, text: String(m.text).slice(0, 200), at: serverTimestamp() });
+          toast('الرسالة اتثبتت');
+        }
         if (btn.dataset.act === 'ban' && confirm('حظر ' + m.name + ' من المجتمع؟')) {
           await setDoc(doc(db, ...chatBase, 'bans', m.uid), { name: m.name, at: serverTimestamp() });
           toast('اتحظر ' + m.name);
@@ -2233,6 +2432,7 @@
       e.preventDefault();
       const text = chatInput.value.trim();
       if (!text || !canWrite()) return;
+      if (!currentRole && hasBad(text)) return toast('الرسالة فيها كلام مش مسموح في المجتمع.');
       chatInput.value = '';
       try {
         if (editingId) {
@@ -2397,6 +2597,7 @@
       lessons = [];
       lessonList.innerHTML = '';
       show('lessons');
+      track({ subj: { [communityId(view.grade, key)]: increment(1) } });
       subscribeLessons();
     }
 
@@ -2404,9 +2605,9 @@
 
     function subscribeLessons() {
       stopLessons();
-      lessonForm.hidden = !currentRole;
+      lessonForm.hidden = !canContent(view.subject);
       const filters = [where('grade', '==', view.grade), where('subject', '==', view.subject)];
-      if (!currentRole) filters.push(where('visible', '==', true));   // الطالب: الظاهر بس
+      if (!canContent(view.subject)) filters.push(where('visible', '==', true));   // الطالب: الظاهر بس
 
       lessonsUnsub = onSnapshot(query(collection(db, 'content'), ...filters), snap => {
         lessons = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -2430,14 +2631,14 @@
             ${l.body ? `<p>${esc(l.body)}</p>` : ''}
             ${yt ? `<div class="video"><iframe src="https://www.youtube.com/embed/${yt}" title="${esc(l.title)}" loading="lazy" allowfullscreen></iframe></div>`
                  : url ? `<a class="link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">افتح الرابط</a>` : ''}
-            ${currentRole ? `
+            ${canContent(view.subject) ? `
               <div class="row__acts" style="margin-top:12px">
                 <button data-act="toggle">${l.visible ? 'إخفاء' : 'إظهار'}</button>
                 <button data-act="edit">تعديل</button>
                 <button data-act="delete" class="danger">حذف</button>
               </div>` : ''}
           </article>`;
-      }).join('') : `<p class="empty">${currentRole ? 'مفيش محتوى هنا. ضيف أول درس من فوق.' : 'لسه مفيش محتوى هنا. هيتضاف قريب.'}</p>`;
+      }).join('') : `<p class="empty">${canContent(view.subject) ? 'مفيش محتوى هنا. ضيف أول درس من فوق.' : 'لسه مفيش محتوى هنا. هيتضاف قريب.'}</p>`;
     }
 
     /* ---- الأدمن: إضافة / تعديل / إخفاء / حذف ---- */
@@ -2553,6 +2754,8 @@
       const sp = safePhoto(s.photo), stuPhoto = document.getElementById('stuPhoto');
       stuPhoto.hidden = !sp;
       if (sp) stuPhoto.src = sp;
+      const stuLetter = document.getElementById('stuLetter');
+      stuLetter.hidden = !!sp; stuLetter.textContent = initial(s.name);
       const state = document.getElementById('stuState');
       state.textContent = s.blocked ? 'متوقف' : 'نشط';
       state.className = 'chip' + (s.blocked ? ' chip--off' : '');
@@ -2752,9 +2955,9 @@
     const whenOf = m => m.createdAt?.toDate?.()
       .toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) || 'الآن';
 
-    const avatarImg = (photo, cls = '') => {
+    const avatarImg = (photo, cls = '', name = '') => {
       const p = safePhoto(photo);
-      return p ? `<img class="avatar ${cls}" src="${p}" alt="">` : `<span class="avatar ${cls}">👤</span>`;
+      return p ? `<img class="avatar ${cls}" src="${p}" alt="">` : `<span class="avatar avatar--letter ${cls}">${esc(initial(name))}</span>`;
     };
 
     /* ---- الطالب ---- */
@@ -2883,7 +3086,7 @@
       devListEl.innerHTML = list.length ? list.map((n, i) => `
         <div class="dev" data-id="${esc(n.id)}" style="--i:${Math.min(i, 8)}">
           <div class="dev__head">
-            ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm')}
+            ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm', n.name)}
             <div><b>${esc(n.name)}</b><small>${esc(n.email)} · ${whenOf(n)}</small></div>
             <span class="chip ${n.reply ? '' : 'chip--off'}">${n.reply ? 'تم الرد' : 'من غير رد'}</span>
           </div>
@@ -3013,7 +3216,7 @@
 
     async function loadCounts() {
       try {
-        const ids = communityIds();
+        const ids = staffCommIds();
         const res = await Promise.all(ids.map(c => getCountFromServer(collection(db, 'communities', c, 'messages'))));
         ids.forEach((c, i) => { counts[c] = res[i].data().count; });
         renderCommunities();
@@ -3021,7 +3224,7 @@
     }
 
     function renderCommunities() {
-      const ids = communityIds();
+      const ids = staffCommIds();
       const total = ids.reduce((sum, c) => sum + (counts[c] || 0), 0);
       document.getElementById('commTotal').textContent = 'إجمالي الرسايل: ' + total;
       document.getElementById('communityList').innerHTML = ids.map((c, i) => {
@@ -3046,7 +3249,7 @@
     document.getElementById('refreshCounts').addEventListener('click', loadCounts);
 
     function updateUnseenUI() {
-      const n = unseenTotal() + pendingCount;
+      const n = unseenTotal() + pendingCount + reportCount;
       panelDot.hidden = n === 0;
       panelDot.textContent = n;
       if (panel.classList.contains('is-open')) renderTabs();
@@ -3056,7 +3259,7 @@
     /* ---- مراقبة آخر رسالة في كل مجتمع ---- */
     function watchCommunities() {
       stopCommunityWatch();
-      communityIds().forEach(c => {
+      staffCommIds().forEach(c => {
         let latest = null;            // وقت آخر رسالة وقت التشغيل
         commUnsubs.push(onSnapshot(
           query(collection(db, 'communities', c, 'messages'), orderBy('createdAt', 'desc'), limit(1)),
@@ -3181,7 +3384,248 @@
       openLogin('student');
     });
 
+    /* ==========================================================
+       بلاغات المجتمع + تثبيت رسالة + كلمات ممنوعة
+       ========================================================== */
+    const pinBar = document.getElementById('pinBar');
+    pinBar.addEventListener('click', async e => {
+      if (!e.target.closest('button')) return;
+      try { await deleteDoc(doc(db, ...chatBase, 'pins', 'current')); } catch (err) { dbError(err); }
+    });
+
+    function watchReports() {
+      stopReportWatch();
+      const bySrc = {}, firsts = {};
+      /* الضيف بيقرا بلاغات كل مجتمع بيديره في استعلام لوحده (عشان قواعد Firestore) */
+      const srcs = currentRole === 'guest' ? staffCommIds() : [null];
+      const unsubs = srcs.map(c => onSnapshot(
+        query(collection(db, 'reports'), where('status', '==', 'open'), ...(c ? [where('c', '==', c)] : [])),
+        snap => {
+          if (firsts[c]) snap.docChanges().forEach(ch => { if (ch.type === 'added') toast('🚩 بلاغ جديد على رسالة'); });
+          firsts[c] = true;
+          bySrc[c] = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => commMod(r.c));
+          reports = Object.values(bySrc).flat().sort((x, y) => (y.createdAt?.seconds || 0) - (x.createdAt?.seconds || 0));
+          reportCount = reports.length;
+          updateUnseenUI(); renderReports();
+        }, () => {}));
+      reportsUnsub = () => unsubs.forEach(u => u());
+    }
+    function stopReportWatch() { if (reportsUnsub) reportsUnsub(); reportsUnsub = null; reports = []; reportCount = 0; }
+
+    function renderReports() {
+      document.getElementById('wordsForm').hidden = currentRole !== 'owner';
+      document.getElementById('reportList').innerHTML = reports.length ? reports.map(r => `
+        <div class="row" data-id="${esc(r.id)}">
+          <div class="row__info"><b>${esc(r.mname)}</b><small>${esc(communityLabel(r.c))} · بلاغ من ${esc(r.rname)}</small><p>${esc(r.text)}</p></div>
+          <div class="row__acts">
+            <button data-act="del">مسح الرسالة</button>
+            ${commPower(r.c) ? '<button data-act="ban">حظر</button>' : ''}
+            <button data-act="ok">تجاهل</button>
+          </div>
+        </div>`).join('') : '<p class="empty">مفيش بلاغات.</p>';
+    }
+
+    document.getElementById('reportList').addEventListener('click', async e => {
+      const b = e.target.closest('button[data-act]');
+      const r = b && reports.find(x => x.id === b.closest('.row').dataset.id);
+      if (!r) return;
+      try {
+        if (b.dataset.act === 'del') await deleteDoc(doc(db, 'communities', r.c, 'messages', r.mid));
+        if (b.dataset.act === 'ban') {
+          if (!confirm('حظر ' + r.mname + ' من المجتمع؟')) return;
+          await setDoc(doc(db, 'communities', r.c, 'bans', r.muid), { name: r.mname, at: serverTimestamp() });
+        }
+        await Promise.all(reports.filter(x => x.c === r.c && x.mid === r.mid)
+          .map(x => updateDoc(doc(db, 'reports', x.id), { status: 'closed' })));
+      } catch (err) { dbError(err); }
+    });
+
+    /* الكلمات الممنوعة: الفلترة عند الطالب (حماية خفيفة، مش قفل كامل) */
+    const norm = s => String(s).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا')
+      .replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/(.)\1{2,}/g, '$1').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const hasBad = t => { const p = ' ' + norm(t) + ' '; return badWords.some(w => p.includes(' ' + w + ' ')); };
+
+    function watchBadWords() {
+      if (badUnsub) return;
+      badUnsub = onSnapshot(doc(db, 'settings', 'moderation'), snap => {
+        const words = snap.data()?.words || [];
+        badWords = words.map(norm).filter(Boolean);
+        const box = document.getElementById('wordsText');
+        if (document.activeElement !== box) box.value = words.join('\n');
+      }, () => {});
+    }
+    document.getElementById('wordsForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const words = document.getElementById('wordsText').value.split('\n').map(w => w.trim()).filter(Boolean).slice(0, 300);
+      try { await setDoc(doc(db, 'settings', 'moderation'), { words }); toast('اتحفظت الكلمات'); } catch (err) { dbError(err); }
+    });
+
+    /* ==========================================================
+       الإحصائيات: كل طالب بيكتب مستند لكل يوم (activity/اليوم_uid)
+       ========================================================== */
+    const dayStr = ago => new Date(Date.now() - ago * 864e5).toLocaleDateString('en-CA');
+    let statDays = 7;
+
+    function track(patch) {
+      const u = auth.currentUser;
+      if (!u || currentRole) return;
+      const day = dayStr(0);
+      setDoc(doc(db, 'activity', day + '_' + u.uid), { uid: u.uid, day, ...patch }, { merge: true }).catch(() => {});
+    }
+
+    const viewedLessons = new Set();
+    function trackLesson(id) {
+      const l = lessons.find(x => x.id === id);
+      if (!l || viewedLessons.has(id)) return;
+      viewedLessons.add(id);
+      track({ les: { [id]: { n: increment(1), t: String(l.title).slice(0, 60), c: communityId(view.grade, view.subject) } } });
+    }
+    lessonList.addEventListener('click', e => { const a = e.target.closest('a.link'); if (a) trackLesson(a.closest('.lesson').dataset.id); });
+    window.addEventListener('blur', () => setTimeout(() => {          // ضغطة جوه فيديو يوتيوب
+      const f = document.activeElement;
+      if (f && f.tagName === 'IFRAME') { const a = f.closest('.lesson'); if (a) trackLesson(a.dataset.id); }
+    }, 0));
+
+    document.getElementById('statRange').addEventListener('click', e => {
+      const b = e.target.closest('button[data-d]');
+      if (b) loadStats(+b.dataset.d);
+    });
+
+    async function loadStats(n = statDays) {
+      statDays = n;
+      document.querySelectorAll('#statRange .cb').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.d === n)));
+      const box = document.getElementById('statsBox');
+      try {
+        const snap = await getDocs(query(collection(db, 'activity'), where('day', '>=', dayStr(n - 1)), limit(5000)));
+        const docs = snap.docs.map(d => d.data());
+        const days = {}, subj = {}, les = {}; let opens = 0;
+        for (let i = n - 1; i >= 0; i--) days[dayStr(i)] = new Set();
+        docs.forEach(a => {
+          days[a.day]?.add(a.uid);
+          Object.entries(a.subj || {}).forEach(([k, v]) => { subj[k] = (subj[k] || 0) + v; });
+          Object.entries(a.les || {}).forEach(([id, l]) => { opens += l.n; (les[id] ||= { t: l.t, c: l.c, n: 0 }).n += l.n; });
+        });
+        const active = new Set(docs.map(a => a.uid)).size;
+        const max = Math.max(1, ...Object.values(days).map(s => s.size));
+        const subs = communityIds().map(c => [c, subj[c] || 0]).sort((a, b) => b[1] - a[1]);
+        const maxS = Math.max(1, subs[0][1]);
+        const top = Object.values(les).sort((a, b) => b.n - a.n).slice(0, 5);
+        box.innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="stat"><b>${active}</b><span>طالب نشط</span></div>
+            <div class="stat"><b>${opens}</b><span>مرة فتح درس</span></div>
+          </div>
+          <h3>الطلاب النشطين يومياً</h3>
+          <div class="bars">${Object.entries(days).map(([d, s]) => `<i title="${d}: ${s.size}" style="height:${s.size / max * 100}%"></i>`).join('')}</div>
+          <h3>أكتر الدروس فتحاً</h3>
+          ${top.length ? top.map(l => `<div class="row"><div class="row__info"><b>${esc(l.t)}</b><small>${l.c ? esc(communityLabel(l.c)) : ''}</small></div><span class="chip">${l.n}</span></div>`).join('') : '<p class="empty">لسه مفيش بيانات.</p>'}
+          <h3>تفاعل المواد</h3>
+          ${subs.map(([c, v], i) => `<div class="row"><div class="row__info"><b>${esc(communityLabel(c))}</b><div class="hbar" style="width:${Math.max(2, v / maxS * 100)}%"></div></div><span class="chip">${v}</span>${i >= subs.length - 3 ? '<span class="pill">الأقل</span>' : ''}</div>`).join('')}`;
+      } catch (err) { box.innerHTML = `<p class="empty">${esc(authMessage(err))}</p>`; }
+    }
+
+    /* ==========================================================
+       إشعارات الطلاب (FCM): درس جديد في صفهم
+       محتاج: VAPID_KEY + firebase-messaging-sw.js + Cloud Function (functions/index.js)
+       ========================================================== */
+    const VAPID_KEY = '';   // Firebase Console ← Project settings ← Cloud Messaging ← Web Push certificates
+    const pushBtn = document.getElementById('pushBtn');
+
+    async function enablePush(silent) {
+      try {
+        const u = auth.currentUser;
+        if (!u || !VAPID_KEY || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+        const { getMessaging, getToken, onMessage, isSupported } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js');
+        if (!(await isSupported())) return;
+        if (Notification.permission !== 'granted' && (await Notification.requestPermission()) !== 'granted') {
+          return silent || toast('الإشعارات مقفولة من إعدادات المتصفح.');
+        }
+        const reg = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+        const msg = getMessaging(app);
+        const token = await getToken(msg, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+        const grade = (await getDoc(doc(db, 'users', u.uid))).data()?.grade ?? null;
+        await setDoc(doc(db, 'pushTokens', token), { uid: u.uid, grade, createdAt: serverTimestamp() });
+        onMessage(msg, p => toast('📘 ' + (p.notification?.body || 'درس جديد')));
+        pushBtn.hidden = true;
+        if (!silent) toast('تمام! هننبّهك لما ينزل درس جديد.');
+      } catch (err) { if (!silent) toast('مقدرناش نفعّل الإشعارات.'); }
+    }
+    pushBtn.addEventListener('click', () => enablePush(false));
+
     buildHome();
   </script>
+<!-- ===== الملفات المدمجة: الموقع كله في ملف واحد. افتح الصفحة بـ #setup
+     لتحميل باقي الملفات (الـ service worker والـ Cloud Function) جاهزة للنشر ===== -->
+<script type="text/plain" class="bundled-file" data-name="firebase-messaging-sw.js">
+/* ضعه بجانب index.html في جذر الموقع */
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
+firebase.initializeApp({
+  apiKey: "AIzaSyDR-H_U6eqXym92T6I7rYnOzMrhShII9vw",
+  authDomain: "learn-with-me-b1d62.firebaseapp.com",
+  projectId: "learn-with-me-b1d62",
+  storageBucket: "learn-with-me-b1d62.firebasestorage.app",
+  messagingSenderId: "658177441369",
+  appId: "1:658177441369:web:41176f37ab1fc1cc797b48"
+});
+firebase.messaging(); // الإشعار بيظهر تلقائي من payload الـ notification
+
+</script>
+<script type="text/plain" class="bundled-file" data-name="functions/index.js">
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
+
+const SUBJECTS = { arabic: 'عربي', science: 'علوم', social: 'دراسات' };
+
+async function notify(c) {
+  if (!c || !c.visible) return;
+  const snap = await db.collection('pushTokens').where('grade', '==', c.grade).get();
+  const tokens = snap.docs.map(d => d.id);
+  for (let i = 0; i < tokens.length; i += 500) {
+    const chunk = tokens.slice(i, i + 500);
+    const res = await admin.messaging().sendEachForMulticast({
+      tokens: chunk,
+      notification: { title: 'درس جديد 📘', body: `${SUBJECTS[c.subject] || ''}: ${c.title}` },
+      webpush: { fcmOptions: { link: '/' } }
+    });
+    const dead = [];
+    res.responses.forEach((r, j) => {
+      if (!r.success && /registration-token-not-registered|invalid-argument/.test(r.error?.code || '')) dead.push(chunk[j]);
+    });
+    await Promise.all(dead.map(t => db.collection('pushTokens').doc(t).delete()));
+  }
+}
+
+exports.lessonCreated = onDocumentCreated('content/{id}', e => notify(e.data.data()));
+exports.lessonShown = onDocumentUpdated('content/{id}', e => {
+  const before = e.data.before.data(), after = e.data.after.data();
+  if (!before.visible && after.visible) return notify(after);
+});
+
+</script>
+<script type="text/plain" class="bundled-file" data-name="functions/package.json">
+{ "name": "functions", "main": "index.js", "engines": { "node": "20" },
+  "dependencies": { "firebase-admin": "^12.0.0", "firebase-functions": "^6.0.0" } }
+
+</script>
+<script>
+(function () {
+  if (location.hash !== '#setup') return;
+  var box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:auto 12px 12px 12px;z-index:99999;background:#fff;color:#14123b;border:3px solid #14123b;border-radius:16px;padding:14px;font:700 14px/1.6 system-ui;direction:rtl';
+  box.innerHTML = '<div style="margin-bottom:8px">ملفات النشر (نزّلها وحطها في مكانها):</div>';
+  document.querySelectorAll('.bundled-file').forEach(function (el) {
+    var name = el.dataset.name, a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([el.textContent.trim() + '\n'], { type: 'text/plain' }));
+    a.download = name.split('/').pop();
+    a.textContent = '⬇ ' + name;
+    a.style.cssText = 'display:block;color:#3b3bff;padding:4px 0';
+    box.appendChild(a);
+  });
+  document.body.appendChild(box);
+})();
+</script>
 </body>
 </html>
