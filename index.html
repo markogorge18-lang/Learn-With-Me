@@ -579,34 +579,31 @@
     /* ==========================================================
        8.8) المجتمع (الشات)
        ========================================================== */
-    .fab {
-      position: fixed;
-      left: 16px;
-      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      z-index: 40;
-      padding: 14px 22px;
+    /* زرار المجتمع: فوق المحتوى جوة صفحة المادة */
+    .community-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      margin-bottom: 18px;
+      padding: 16px 20px;
       border: 0;
-      border-radius: 99px;
+      border-radius: 24px;
       background: var(--pink);
       color: #fff;
-      font: 600 16px 'IBM Plex Sans Arabic', sans-serif;
+      font: 600 18px 'IBM Plex Sans Arabic', sans-serif;
+      text-align: right;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(255, 92, 138, .45);
-      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
-      animation: fab-in .7s .25s cubic-bezier(.2, 1.5, .4, 1) backwards;
+      box-shadow: 0 7px 0 #c93d65;
+      animation: card-in .6s .15s cubic-bezier(.2, 1.3, .4, 1) backwards;
+      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), box-shadow .3s;
     }
-    .fab:hover { transform: translateY(-4px) rotate(-2deg); }
-    .fab:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-    .fab::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border: 2px solid var(--pink);
-      border-radius: inherit;
-      animation: ring 2.6s ease-out infinite;
-    }
-    @keyframes fab-in { from { transform: translateY(90px) scale(.6); opacity: 0; } }
-    @keyframes ring   { from { transform: scale(1); opacity: .8; } to { transform: scale(1.5, 1.8); opacity: 0; } }
+    .community-btn:hover  { transform: translateY(-3px); }
+    .community-btn:active { transform: translateY(5px); box-shadow: 0 2px 0 #c93d65; }
+    .community-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+    .community-btn small { display: block; font-size: 13px; font-weight: 500; opacity: .9; }
+    .community-btn__ic { font-size: 32px; animation: wiggle 2.6s ease-in-out infinite; }
+    @keyframes wiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-16deg); } 92% { transform: rotate(14deg); } }
 
     .chat__tools { display: flex; align-items: center; gap: 8px; }
     .tool {
@@ -746,6 +743,12 @@
     </div>
     <p class="page__sub" id="lessonsGrade"></p>
 
+    <!-- المجتمع: فوق المحتوى -->
+    <button class="community-btn" id="communityBtn">
+      <span class="community-btn__ic">💬</span>
+      <span>المجتمع<small id="communitySub"></small></span>
+    </button>
+
     <!-- للأدمن بس -->
     <form class="addbox" id="lessonForm" hidden novalidate>
       <h3>إضافة محتوى</h3>
@@ -873,8 +876,6 @@
   <div class="toast" id="toast" role="status"></div>
 
   <!-- ========== المجتمع ========== -->
-  <button class="fab" id="fab" hidden>💬 المجتمع</button>
-
   <div class="panel chat" id="chat" aria-hidden="true">
     <div class="panel__bar">
       <div><h2 id="chatTitle">المجتمع</h2><span class="chip" id="chatState">مفتوح</span></div>
@@ -1525,7 +1526,7 @@
       catch (err) { dbError(err); }
     });
 
-    document.getElementById('fab').addEventListener('click', openCommunity);
+    document.getElementById('communityBtn').addEventListener('click', openCommunity);
     document.getElementById('chatClose').addEventListener('click', closeChat);
     document.getElementById('cancelEdit').addEventListener('click', cancelEdit);
 
@@ -1553,7 +1554,6 @@
         el.hidden = key !== name;
         if (key === name) { el.classList.remove('screen-in'); void el.offsetWidth; el.classList.add('screen-in'); }
       });
-      document.getElementById('fab').hidden = name === 'home';   // المجتمع جوة الصف بس
       if (name !== 'lessons') stopLessons();
       window.scrollTo(0, 0);
     }
@@ -1612,6 +1612,7 @@
       const sub = SUBJECTS.find(x => x.key === key);
       document.getElementById('lessonsTitle').textContent = subjectName(view.grade, sub);
       document.getElementById('lessonsGrade').textContent = GRADES[view.grade].name;
+      document.getElementById('communitySub').textContent = 'مجتمع ' + GRADES[view.grade].name + ' — اسأل وكلّم زمايلك';
       resetLessonForm();
       lessons = [];
       lessonList.innerHTML = '';
