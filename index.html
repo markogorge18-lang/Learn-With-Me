@@ -4,12 +4,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>مذاكرة — منصة الإعدادي وأولى بكالوريا</title>
+  <title>Learn With Me — منصة الإعدادي وأولى بكالوريا</title>
   <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Fredoka:wght@600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
     /* ==========================================================
@@ -822,6 +822,144 @@
       }
       .hero h1 .word, .hero p, .hero .btn { opacity: 1; transform: none; }
     }
+
+    /* ==========================================================
+       10) تحسينات الشكل (بتتغلب على اللي قبلها)
+       ========================================================== */
+    :root { --sh: 0 6px 18px rgba(20, 18, 59, .08); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sh: 0 6px 18px rgba(0, 0, 0, .4); } }
+    :root[data-theme="dark"] { --sh: 0 6px 18px rgba(0, 0, 0, .4); }
+
+    /* خلفية منقّطة ناعمة للصفحات */
+    body {
+      background-image: radial-gradient(color-mix(in srgb, var(--txt) 8%, transparent) 1.3px, transparent 1.3px);
+      background-size: 24px 24px;
+    }
+
+    /* --- الهيرو: ضباب ألوان متحرك + لمعة على الكلمة --- */
+    .hero::before { -webkit-mask-image: linear-gradient(#000 35%, transparent); mask-image: linear-gradient(#000 35%, transparent); }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      background:
+        radial-gradient(40% 35% at 85% 15%, rgba(123, 77, 255, .5), transparent 70%),
+        radial-gradient(35% 30% at 10% 80%, rgba(255, 92, 138, .38), transparent 70%),
+        radial-gradient(30% 25% at 70% 70%, rgba(59, 59, 255, .45), transparent 70%);
+      animation: blobs 14s ease-in-out infinite alternate;
+    }
+    @keyframes blobs { to { transform: translate(4%, -3%) scale(1.12) rotate(6deg); } }
+
+    .logo { font-family: 'Fredoka', 'Lalezar', sans-serif; font-weight: 600; font-size: 24px; letter-spacing: -.3px; }
+    .logo i { font-family: 'Fredoka', sans-serif; font-weight: 600; animation: logo 5s ease-in-out infinite; }
+    @keyframes logo { 0%, 88%, 100% { transform: rotate(-8deg); } 94% { transform: rotate(10deg) scale(1.15); } }
+
+    .hero h1 .highlight { position: relative; overflow: hidden; }
+    .hero h1 .highlight::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .75) 50%, transparent 70%);
+      transform: translateX(130%);
+      animation: shine 3.6s 1.8s infinite;
+    }
+    @keyframes shine { to { transform: translateX(-130%); } }
+
+    /* --- كروت الصفوف: ملمس وعمق --- */
+    .gcard {
+      position: relative;
+      overflow: hidden;
+      min-height: 138px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .35), inset 0 -7px 0 rgba(0, 0, 0, .16);
+    }
+    .gcard::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(160deg, rgba(255, 255, 255, .26), transparent 55%);
+    }
+    .gcard__num {
+      position: absolute;
+      top: -18px;
+      left: 6px;
+      font: 400 130px/1 'Lalezar', sans-serif;
+      font-style: normal;
+      opacity: .2;
+      pointer-events: none;
+      transition: transform .6s cubic-bezier(.2, 1.4, .4, 1);
+    }
+    .gcard:hover .gcard__num { transform: scale(1.18) rotate(-8deg); }
+    .gcard b { position: relative; font-size: 44px; }
+    .gcard span {
+      position: relative;
+      align-self: flex-start;
+      padding: 2px 14px;
+      border-radius: 99px;
+      background: color-mix(in srgb, var(--fg) 16%, transparent);
+    }
+
+    /* --- العناوين: هايلايتر --- */
+    .topbar h2 {
+      padding: 0 8px;
+      background: linear-gradient(transparent 60%, color-mix(in srgb, var(--acc) 45%, transparent) 60%);
+    }
+
+    /* --- المواد: مستطيلات بعمق وسهم --- */
+    .subj {
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 0 color-mix(in srgb, var(--acc) 60%, #000);
+    }
+    .subj > * { position: relative; }
+    .subj::before {
+      content: "";
+      position: absolute;
+      top: -50px;
+      right: -30px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .14);
+      transition: transform .6s cubic-bezier(.2, 1.4, .4, 1);
+    }
+    .subj:hover::before { transform: scale(1.4); }
+    .subj::after {
+      content: "‹";
+      position: relative;
+      margin-inline-start: auto;
+      font: 400 44px/1 'Lalezar', sans-serif;
+      opacity: .75;
+      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
+    }
+    .subj:hover::after { transform: translateX(-8px); }
+    .subj:active { transform: translateY(5px); box-shadow: 0 3px 0 color-mix(in srgb, var(--acc) 60%, #000); }
+    .subj--locked { box-shadow: none; }
+
+    /* --- المحتوى والكروت --- */
+    .lesson, .row, .addbox, .stat, .helper, .m { box-shadow: var(--sh); }
+    .lesson { border-inline-start: 6px solid var(--acc); }
+    #lessonList .empty::before { content: "📭"; display: block; margin-bottom: 6px; font-size: 44px; }
+
+    .community-btn { background: linear-gradient(120deg, var(--pink), #ff8a5c); }
+    .helper__ic { box-shadow: 0 5px 0 #1a9e4c; }
+
+    /* --- الشات --- */
+    .m--me { background: linear-gradient(135deg, var(--blue), #6a4dff); }
+    .chat__composer { box-shadow: 0 -8px 24px rgba(20, 18, 59, .1); }
+
+    /* --- نافذة الدخول: مقبض السحب --- */
+    .sheet::before {
+      content: "";
+      display: block;
+      width: 46px;
+      height: 5px;
+      margin: -14px auto 16px;
+      border-radius: 99px;
+      background: var(--mut);
+      opacity: .35;
+    }
   </style>
 </head>
 
@@ -836,7 +974,7 @@
     <span class="float" style="--color:#ff5c8a; --size:38px; --time:5.5s; top:44%; right:42%">أ ب</span>
 
     <nav class="nav">
-      <div class="logo"><i>م</i>مذاكرة</div>
+      <div class="logo"><i>L</i><span dir="ltr">Learn With Me</span></div>
       <div class="nav__btns">
         <button class="btn btn--small bell" id="bellBtn" aria-label="الرسايل والتنبيهات" hidden>🔔<span class="dot" id="bellDot" hidden>0</span></button>
         <button class="btn btn--small" id="panelBtn" hidden>لوحة التحكم</button>
@@ -1823,6 +1961,7 @@
         const lock = !canGrade(i);
         return `
           <button class="gcard ${lock ? 'gcard--locked' : ''}" data-i="${i}" style="--bg:${g.color};--fg:${g.text};--i:${i}">
+            <i class="gcard__num">${['١', '٢', '٣', '١'][i]}</i>
             <b>${g.big}</b><span>${g.small}${lock ? ' 🔒' : ''}</span>
           </button>`;
       }).join('');
@@ -2282,6 +2421,22 @@
       setTimeout(() => root.classList.remove('theme-anim'), 500);
     });
     paintTheme();
+
+    /* ميل ثلاثي الأبعاد لكروت الصفوف مع الماوس (كمبيوتر بس) */
+    const gradeGridEl = document.getElementById('gradeGrid');
+    gradeGridEl.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      const card = e.target.closest('.gcard');
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      card.style.transform = `perspective(700px) rotateY(${x * -16}deg) rotateX(${y * 16}deg) translateY(-6px)`;
+    });
+    gradeGridEl.addEventListener('mouseout', e => {
+      const card = e.target.closest('.gcard');
+      if (card && !card.contains(e.relatedTarget)) card.style.transform = '';
+    });
 
     /* ---- الأحداث ---- */
     seg.addEventListener('click', e => {
