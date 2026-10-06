@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>مذاكرة — منصة الإعدادي وأولى بكالوريا</title>
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,13 +31,26 @@
       --acct:  #ffffff;
     }
 
+    /* الغامق: تلقائي حسب النظام، إلا لو الطالب اختار فاتح */
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --bg:   #0d0c28;
         --card: #1a1850;
         --txt:  #f1f1ff;
         --mut:  #a9a8d8;
       }
+    }
+    /* الغامق: لو الطالب اختاره بإيده */
+    :root[data-theme="dark"] {
+      --bg:   #0d0c28;
+      --card: #1a1850;
+      --txt:  #f1f1ff;
+      --mut:  #a9a8d8;
+    }
+
+    body { transition: background-color .4s, color .4s; }
+    html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+      transition: background-color .45s, color .45s, border-color .45s, box-shadow .45s !important;
     }
 
     /* ==========================================================
@@ -673,6 +687,120 @@
     .chat__edit button { border: 0; background: none; color: var(--pink); font: 600 13px 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; }
 
     /* ==========================================================
+       8.9) المساعدين + تحكم الطالب + الرسايل
+       ========================================================== */
+    .sec-title { margin: 30px 0 2px; font-size: 28px; }
+    .helper {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 16px 18px;
+      border: 0;
+      border-radius: 24px;
+      background: var(--card);
+      color: var(--txt);
+      font-family: inherit;
+      text-align: right;
+      cursor: pointer;
+      animation: card-in .6s backwards;
+      animation-delay: calc(.45s + var(--i) * 110ms);
+      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
+    }
+    .helper:hover { transform: translateY(-4px); }
+    .helper:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+    .helper__ic { flex: none; display: grid; place-items: center; width: 54px; height: 54px; border-radius: 18px; background: #25d366; font-size: 28px; }
+    .helper b { display: block; font: 400 22px/1.2 'Lalezar', sans-serif; }
+    .helper small { color: var(--mut); }
+    .helper__go { margin-inline-start: auto; padding: 8px 16px; border-radius: 99px; background: #25d366; color: #fff; font-size: 13px; font-weight: 600; }
+
+    .gcard--locked, .subj--locked { opacity: .55; filter: grayscale(.7); }
+
+    .bell { position: relative; }
+    .dot {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 99px;
+      background: var(--pink);
+      color: #fff;
+      font-size: 12px;
+      line-height: 20px;
+      text-align: center;
+    }
+
+    .alert-banner {
+      position: fixed;
+      top: calc(12px + env(safe-area-inset-top, 0px));
+      left: 12px;
+      right: 12px;
+      z-index: 100;
+      max-width: 520px;
+      margin: auto;
+      padding: 14px 18px;
+      border-radius: 20px;
+      background: var(--lime);
+      color: var(--ink);
+      font-weight: 600;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .3);
+      cursor: pointer;
+      animation: drop .6s cubic-bezier(.2, 1.5, .4, 1);
+    }
+    @keyframes drop { from { transform: translateY(-160%); } }
+
+    #stuPanel { z-index: 70; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .cb {
+      padding: 8px 14px;
+      border: 2px solid var(--mut);
+      border-radius: 99px;
+      background: transparent;
+      color: var(--txt);
+      font: 600 14px 'IBM Plex Sans Arabic', sans-serif;
+      cursor: pointer;
+      transition: background .25s, color .25s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
+    }
+    .cb:hover { transform: translateY(-2px); }
+    .cb[aria-pressed="true"] { border-color: var(--lime); background: var(--lime); color: var(--ink); }
+    .cb--ban[aria-pressed="true"] { border-color: var(--pink); background: var(--pink); color: #fff; }
+    .note-s { margin: 6px 0; color: var(--mut); font-size: 14px; }
+    .ctl { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .tool.danger { background: var(--pink); color: #fff; }
+    .stu-mail { margin-bottom: 12px; color: var(--mut); direction: ltr; text-align: right; word-break: break-all; }
+
+    /* ==========================================================
+       8.95) زرار دارك / لايت
+       ========================================================== */
+    .theme-btn {
+      position: fixed;
+      left: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--card);
+      color: var(--txt);
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(20, 18, 59, .28);
+      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
+      animation: fab-in .7s .4s cubic-bezier(.2, 1.5, .4, 1) backwards;
+    }
+    .theme-btn:hover { transform: scale(1.1) rotate(-12deg); }
+    .theme-btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+    .theme-btn.spin span { display: inline-block; animation: spin .6s cubic-bezier(.3, 1.4, .5, 1); }
+    @keyframes spin   { from { transform: rotate(-200deg) scale(.3); opacity: 0; } }
+    @keyframes fab-in { from { transform: translateY(90px) scale(.6); opacity: 0; } }
+
+    /* ==========================================================
        9) الحركات
        ========================================================== */
     @keyframes grid-move { to { background-position: 0 36px, 36px 0; } }
@@ -710,6 +838,7 @@
     <nav class="nav">
       <div class="logo"><i>م</i>مذاكرة</div>
       <div class="nav__btns">
+        <button class="btn btn--small bell" id="bellBtn" aria-label="الرسايل والتنبيهات" hidden>🔔<span class="dot" id="bellDot" hidden>0</span></button>
         <button class="btn btn--small" id="panelBtn" hidden>لوحة التحكم</button>
         <button class="btn btn--small" id="loginBtn">دخول</button>
       </div>
@@ -733,6 +862,10 @@
     </div>
     <p class="page__sub">اختار المادة</p>
     <div id="subjectList"></div>
+
+    <h3 class="sec-title">قسم المساعدين</h3>
+    <p class="page__sub">محتاج مساعدة؟ كلّم مساعد على واتساب مباشرة.</p>
+    <div id="helperList"></div>
   </main>
 
   <!-- ========== شاشة 3: المحتوى ========== -->
@@ -875,6 +1008,8 @@
 
   <div class="toast" id="toast" role="status"></div>
 
+  <button class="theme-btn" id="themeBtn" type="button"><span></span></button>
+
   <!-- ========== المجتمع ========== -->
   <div class="panel chat" id="chat" aria-hidden="true">
     <div class="panel__bar">
@@ -902,6 +1037,67 @@
   </div>
 
 
+  <!-- ========== التحكم في طالب (للمالك) ========== -->
+  <div class="panel" id="stuPanel" aria-hidden="true">
+    <div class="panel__bar">
+      <div><h2 id="stuName">طالب</h2><span class="chip" id="stuState"></span></div>
+      <button class="close" id="stuClose" aria-label="إغلاق">×</button>
+    </div>
+    <div class="panel__body">
+      <p class="stu-mail" id="stuMail"></p>
+
+      <form class="addbox" id="sendForm" novalidate>
+        <h3>ابعتله</h3>
+        <div class="chips" id="sendType">
+          <button type="button" class="ptab" data-type="alert" aria-selected="true">🔔 تنبيه</button>
+          <button type="button" class="ptab" data-type="message" aria-selected="false">✉️ رسالة</button>
+        </div>
+        <label class="field"><textarea class="rtl" id="sendText" rows="3" maxlength="500" placeholder="اكتب النص هنا"></textarea></label>
+        <div class="msg" id="sendMsg" role="alert"></div>
+        <button class="btn" type="submit">إرسال</button>
+      </form>
+
+      <div class="addbox">
+        <h3>الحظر</h3>
+        <div class="ctl"><span>الحساب كله</span><button class="tool" id="blockBtn" type="button"></button></div>
+        <p class="note-s">حظر من مجتمع مادة معينة:</p>
+        <div id="banChips"></div>
+      </div>
+
+      <div class="addbox">
+        <h3>المحتوى المتاح له</h3>
+        <p class="note-s">الصفوف:</p><div class="chips" id="accGrades"></div>
+        <p class="note-s">المواد:</p><div class="chips" id="accSubjects"></div>
+        <div class="msg" id="accMsg" role="alert"></div>
+        <button class="btn" id="accSave" type="button">حفظ</button>
+        <button class="tool" id="accReset" type="button" style="width:100%;margin-top:8px">رجّعه لكل المحتوى</button>
+      </div>
+
+      <div class="addbox">
+        <h3>رسايله في المجتمع</h3>
+        <button class="btn" id="wipeMsgs" type="button" style="background:var(--pink);box-shadow:0 5px 0 #c93d65">مسح كل رسايله</button>
+      </div>
+
+      <div class="addbox">
+        <h3>الحساب</h3>
+        <div class="ctl">
+          <button class="tool" id="renameBtn" type="button">تعديل الاسم</button>
+          <button class="tool danger" id="deleteBtn" type="button">حذف الطالب</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== رسايل وتنبيهات الطالب ========== -->
+  <div class="alert-banner" id="alertBanner" role="alert" hidden></div>
+  <div class="panel" id="inbox" aria-hidden="true">
+    <div class="panel__bar">
+      <div><h2>رسايلك وتنبيهاتك</h2></div>
+      <button class="close" id="inboxClose" aria-label="إغلاق">×</button>
+    </div>
+    <div class="panel__body" id="inboxList"></div>
+  </div>
+
   <script type="module">
     /* ==========================================================
        Firebase
@@ -915,7 +1111,8 @@
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
-      collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp
+      collection, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp,
+      writeBatch, getDocs, deleteField
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -972,6 +1169,20 @@
     /* في أولى بكالوريا العلوم = علوم متكاملة */
     const subjectName = (grade, sub) =>
       grade === 3 && sub.key === 'science' ? 'علوم متكاملة' : sub.name;
+
+    /* مجتمع لكل مادة في كل صف (12 مجتمع). المعرّف مثل: 0_arabic */
+    const communityId  = (grade, key) => grade + '_' + key;
+    const communityIds = () => GRADES.flatMap((_, g) => SUBJECTS.map(x => communityId(g, x.key)));
+    const communityLabel = id => {
+      const [g, key] = id.split('_');
+      return subjectName(Number(g), SUBJECTS.find(x => x.key === key)) + ' — ' + GRADES[g].name;
+    };
+
+    /* المساعدين: الرقم بصيغة دولية من غير + (يفتح واتساب على طول) */
+    const HELPERS = [
+      { icon: '💡', title: 'مساعد في الشرح',   sub: 'مش فاهم درس؟ اسأله',        phone: '201108459495', topic: 'الشرح' },
+      { icon: '💻', title: 'مساعد في البرمجة', sub: 'محتاج مساعدة في كود؟',      phone: '201094393622', topic: 'البرمجة' }
+    ];
 
     /* ==========================================================
        تسجيل الدخول
@@ -1129,7 +1340,13 @@
     const loginBtn = document.getElementById('loginBtn');
     const panelBtn = document.getElementById('panelBtn');
 
-    let myName = null;   // اسم الطالب (من قاعدة البيانات)
+    const bellBtn = document.getElementById('bellBtn');
+    const bellDot = document.getElementById('bellDot');
+
+    let myName = null;     // اسم الطالب
+    let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
+    let inbox = [];        // تنبيهات ورسايل الإدارة
+    let studentUnsubs = [];
 
     async function loadStudentName(user) {
       try {
@@ -1138,13 +1355,65 @@
       } catch (e) { return null; }
     }
 
+    /* هل الصف / المادة متاحة؟ (الأدمن شايف كله) */
+    const canGrade   = i   => !!currentRole || !myAccess || (myAccess.grades   || []).includes(i);
+    const canSubject = key => !!currentRole || !myAccess || (myAccess.subjects || []).includes(key);
+
+    /* متابعة ملف الطالب والرسايل لحظياً */
+    function watchStudent(user) {
+      stopStudentWatch();
+
+      studentUnsubs.push(onSnapshot(doc(db, 'users', user.uid), snap => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+        if (d.blocked) { toast('حسابك اتوقف. كلّم الإدارة.'); signOut(auth); return; }
+        const before = JSON.stringify(myAccess);
+        myName = d.name;
+        myAccess = d.access || null;
+        if (JSON.stringify(myAccess) !== before) refreshAccess();
+      }, () => {}));
+
+      let first = true;
+      studentUnsubs.push(onSnapshot(
+        query(collection(db, 'users', user.uid, 'inbox'), orderBy('createdAt', 'desc'), limit(50)),
+        snap => {
+          inbox = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (!first) snap.docChanges().forEach(c => {
+            const m = c.doc.data();
+            if (c.type !== 'added' || m.read) return;
+            if (m.type === 'alert') showAlert(m.text);
+            else toast('✉️ وصلتك رسالة جديدة من الإدارة');
+          });
+          first = false;
+          updateBell();
+        }, () => {}));
+    }
+
+    function stopStudentWatch() { studentUnsubs.forEach(u => u()); studentUnsubs = []; }
+
+    /* الصلاحيات اتغيرت: حدّث الشاشات */
+    function refreshAccess() {
+      buildHome();
+      if (view.screen !== 'home' && !canGrade(view.grade)) { toast('الصف ده اتقفل عليك.'); show('home'); return; }
+      if (view.screen === 'subjects') renderSubjects();
+      if (view.screen === 'lessons' && !canSubject(view.subject)) { toast('المادة دي اتقفلت عليك.'); show('subjects'); renderSubjects(); }
+    }
+
     onAuthStateChanged(auth, async user => {
       loginBtn.textContent = user ? 'خروج' : 'دخول';
       currentRole = user ? await getRole(user) : null;
-      myName = user && !currentRole ? await loadStudentName(user) : null;
+      stopStudentWatch();
+      myName = null; myAccess = null; inbox = [];
+
+      const isStudent = !!user && !currentRole;
+      if (isStudent) watchStudent(user);
+      bellBtn.hidden = !isStudent;
+      updateBell();
+      buildHome();
+
       panelBtn.hidden = !currentRole;
       if (!currentRole) closePanel();
-      if (!user) { closeChat(); if (view.screen !== 'home') show('home'); }
+      if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
       else if (view.screen === 'lessons') subscribeLessons();   // الدور اتحدد: حدّث القائمة
     });
 
@@ -1178,6 +1447,14 @@
     }
     const dbError = err => toast(authMessage(err));
 
+    /* لو قاعدة البيانات مش مفعّلة أو القواعد مش منشورة: اظهر السبب في اللوحة */
+    function panelError(err) {
+      const msg = err.code === 'permission-denied'
+        ? 'مفيش صلاحية قراءة. فعّل Firestore وانشر ملف firestore.rules في Firebase.'
+        : authMessage(err);
+      studentList.innerHTML = adminList.innerHTML = `<p class="empty">${esc(msg)}</p>`;
+    }
+
     function openPanel() {
       if (!currentRole) return;
       closePanel();
@@ -1191,11 +1468,11 @@
         unsubs.push(onSnapshot(collection(db, 'users'), snap => {
           students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderStudents();
-        }, dbError));
+        }, panelError));
         unsubs.push(onSnapshot(collection(db, 'admins'), snap => {
           admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderAdmins();
-        }, dbError));
+        }, panelError));
       }
 
       setTab(allowed[0]);
@@ -1207,6 +1484,7 @@
     function closePanel() {
       unsubs.forEach(u => u());
       unsubs = [];
+      closeStudent();
       panel.classList.remove('is-open');
       panel.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
@@ -1233,34 +1511,15 @@
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
           <div class="row__info"><b>${esc(s.name)}</b><span>${esc(s.email)}</span></div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
-          <div class="row__acts">
-            <button data-act="rename">تعديل الاسم</button>
-            <button data-act="block">${s.blocked ? 'فك الحظر' : 'حظر'}</button>
-            <button data-act="delete" class="danger">حذف</button>
-          </div>
+          <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
+
+      if (stuId) renderStudentSheet();   // لو شاشة الطالب مفتوحة حدّثها
     }
 
-    studentList.addEventListener('click', async e => {
-      const btn = e.target.closest('button[data-act]');
-      if (!btn) return;
-      const id = btn.closest('.row').dataset.id;
-      const st = students.find(x => x.id === id);
-      if (!st) return;
-      try {
-        if (btn.dataset.act === 'rename') {
-          const n = prompt('الاسم الجديد:', st.name);
-          if (n && n.trim().length >= 2) await updateDoc(doc(db, 'users', id), { name: n.trim() });
-        }
-        if (btn.dataset.act === 'block') {
-          await updateDoc(doc(db, 'users', id), { blocked: !st.blocked });
-          toast(st.blocked ? 'اتفك الحظر' : 'الطالب اتوقف');
-        }
-        if (btn.dataset.act === 'delete' && confirm('حذف ' + st.name + ' نهائياً؟')) {
-          await deleteDoc(doc(db, 'users', id));
-          toast('اتحذف');
-        }
-      } catch (err) { dbError(err); }
+    studentList.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-act="open"]');
+      if (btn) openStudent(btn.closest('.row').dataset.id);
     });
 
     document.getElementById('search').addEventListener('input', renderStudents);
@@ -1356,10 +1615,10 @@
     const senderName = () => currentRole ? auth.currentUser.displayName : myName;
     const canWrite = () => currentRole === 'owner' || (!iAmBanned && (!chatClosed || !!currentRole));
 
-    let chatBase = null;   // مسار مجتمع الصف الحالي: ['communities', '0']
+    let chatBase = null;   // مسار مجتمع المادة الحالية: ['communities', '0_arabic']
 
     async function openCommunity() {
-      if (view.grade === null) return;
+      if (view.grade === null || !view.subject) return;
       const user = auth.currentUser;
       if (!user) { wantedGrade = null; return openLogin('student'); }
 
@@ -1373,8 +1632,8 @@
       }
 
       closeChat();
-      chatBase = ['communities', String(view.grade)];
-      document.getElementById('chatTitle').textContent = 'مجتمع ' + GRADES[view.grade].name;
+      chatBase = ['communities', communityId(view.grade, view.subject)];
+      document.getElementById('chatTitle').textContent = 'مجتمع ' + communityLabel(chatBase[1]);
       messages = []; seen = new Set(); firstRender = true; chatClosed = false; iAmBanned = false;
       lockBtn.hidden = bansBtn.hidden = currentRole !== 'owner';
       banList.hidden = true;
@@ -1560,10 +1819,16 @@
 
     /* ---- 1) اختار صفك ---- */
     function buildHome() {
-      document.getElementById('gradeGrid').innerHTML = GRADES.map((g, i) => `
-        <button class="gcard" data-i="${i}" style="--bg:${g.color};--fg:${g.text};--i:${i}">
-          <b>${g.big}</b><span>${g.small}</span>
-        </button>`).join('');
+      const html = GRADES.map((g, i) => {
+        const lock = !canGrade(i);
+        return `
+          <button class="gcard ${lock ? 'gcard--locked' : ''}" data-i="${i}" style="--bg:${g.color};--fg:${g.text};--i:${i}">
+            <b>${g.big}</b><span>${g.small}${lock ? ' 🔒' : ''}</span>
+          </button>`;
+      }).join('');
+      if (html === buildHome.last) return;       // من غير تغيير: ما نعيدش الحركة
+      buildHome.last = html;
+      document.getElementById('gradeGrid').innerHTML = html;
     }
 
     document.getElementById('gradeGrid').addEventListener('click', e => {
@@ -1586,24 +1851,54 @@
       return true;
     }
 
-    /* ---- 2) المواد ---- */
+    /* ---- 2) المواد + المساعدين ---- */
     function goSubjects(i) {
+      if (!canGrade(i)) return toast('الصف ده مش متاح ليك. كلّم الإدارة.');
       const g = GRADES[i];
       view.grade = i;
       document.documentElement.style.setProperty('--acc', g.color);
       document.documentElement.style.setProperty('--acct', g.text);
       document.getElementById('subjGrade').textContent = g.name;
-      document.getElementById('subjectList').innerHTML = SUBJECTS.map((sub, k) => `
-        <button class="subj" data-key="${sub.key}" style="--i:${k}">
-          <span class="subj__ic">${sub.icon}</span>
-          <span><b>${subjectName(i, sub)}</b><small>دروس وشرح وروابط</small></span>
-        </button>`).join('');
+      renderSubjects();
+      renderHelpers();
       show('subjects');
+    }
+
+    function renderSubjects() {
+      document.getElementById('subjectList').innerHTML = SUBJECTS.map((sub, k) => {
+        const ok = canSubject(sub.key);
+        return `
+          <button class="subj ${ok ? '' : 'subj--locked'}" data-key="${sub.key}" style="--i:${k}">
+            <span class="subj__ic">${ok ? sub.icon : '🔒'}</span>
+            <span><b>${subjectName(view.grade, sub)}</b><small>${ok ? 'دروس وشرح وروابط' : 'مش متاحة ليك'}</small></span>
+          </button>`;
+      }).join('');
+    }
+
+    function renderHelpers() {
+      document.getElementById('helperList').innerHTML = HELPERS.map((h, k) => `
+        <button class="helper" data-k="${k}" style="--i:${k}">
+          <span class="helper__ic">${h.icon}</span>
+          <span><b>${h.title}</b><small>${h.sub}</small></span>
+          <span class="helper__go">واتساب</span>
+        </button>`).join('');
     }
 
     document.getElementById('subjectList').addEventListener('click', e => {
       const b = e.target.closest('.subj');
-      if (b) goLessons(b.dataset.key);
+      if (!b) return;
+      if (b.classList.contains('subj--locked')) return toast('المادة دي مش متاحة ليك. كلّم الإدارة.');
+      goLessons(b.dataset.key);
+    });
+
+    /* المساعد: يفتح واتساب على طول برسالة جاهزة */
+    document.getElementById('helperList').addEventListener('click', e => {
+      const b = e.target.closest('.helper');
+      if (!b) return;
+      const h = HELPERS[Number(b.dataset.k)];
+      const who = myName || auth.currentUser?.displayName || '';
+      const text = `أهلاً، أنا ${who} من ${GRADES[view.grade].name}. محتاج مساعدة في ${h.topic}.`;
+      window.open(`https://wa.me/${h.phone}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
     });
 
     /* ---- 3) المحتوى ---- */
@@ -1612,7 +1907,7 @@
       const sub = SUBJECTS.find(x => x.key === key);
       document.getElementById('lessonsTitle').textContent = subjectName(view.grade, sub);
       document.getElementById('lessonsGrade').textContent = GRADES[view.grade].name;
-      document.getElementById('communitySub').textContent = 'مجتمع ' + GRADES[view.grade].name + ' — اسأل وكلّم زمايلك';
+      document.getElementById('communitySub').textContent = 'مجتمع ' + subjectName(view.grade, sub) + ' · ' + GRADES[view.grade].name;
       resetLessonForm();
       lessons = [];
       lessonList.innerHTML = '';
@@ -1723,6 +2018,270 @@
     document.querySelectorAll('[data-back]').forEach(b =>
       b.addEventListener('click', () => show(b.dataset.back)));
     document.getElementById('goContent').addEventListener('click', () => { closePanel(); show('home'); });
+
+    /* ==========================================================
+       التحكم الكامل في طالب (المالك)
+       تنبيه / رسالة، حظر، محتوى أكتر وأقل، مسح رسايله
+       ========================================================== */
+    const stuPanel = document.getElementById('stuPanel');
+    let stuId = null, stuBans = {}, sendType = 'alert';
+    const accSel = { grades: new Set(), subjects: new Set() };
+    const stu = () => students.find(x => x.id === stuId);
+    const sheetMsg = (id, text, ok) => {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'msg' + (ok ? ' ok' : '');
+    };
+
+    async function openStudent(id) {
+      stuId = id;
+      const s = stu();
+      if (!s) return;
+      accSel.grades   = new Set(s.access ? s.access.grades   : GRADES.map((_, i) => i));
+      accSel.subjects = new Set(s.access ? s.access.subjects : SUBJECTS.map(x => x.key));
+      stuBans = {};
+      document.getElementById('sendText').value = '';
+      sheetMsg('sendMsg', ''); sheetMsg('accMsg', '');
+      stuPanel.classList.add('is-open');
+      stuPanel.setAttribute('aria-hidden', 'false');
+      renderStudentSheet();
+      try {
+        const ids = communityIds();
+        const snaps = await Promise.all(ids.map(c => getDoc(doc(db, 'communities', c, 'bans', id))));
+        if (stuId !== id) return;
+        stuBans = Object.fromEntries(ids.map((c, i) => [c, snaps[i].exists()]));
+        renderStudentSheet();
+      } catch (err) { dbError(err); }
+    }
+
+    function closeStudent() {
+      stuId = null;
+      stuPanel.classList.remove('is-open');
+      stuPanel.setAttribute('aria-hidden', 'true');
+    }
+
+    function renderStudentSheet() {
+      const s = stu();
+      if (!s) return closeStudent();
+      document.getElementById('stuName').textContent = s.name;
+      document.getElementById('stuMail').textContent = s.email;
+      const state = document.getElementById('stuState');
+      state.textContent = s.blocked ? 'متوقف' : 'نشط';
+      state.className = 'chip' + (s.blocked ? ' chip--off' : '');
+      document.getElementById('blockBtn').textContent = s.blocked ? 'فك الحظر' : 'حظر الحساب';
+
+      document.getElementById('banChips').innerHTML = GRADES.map((g, gi) => `
+        <p class="note-s">${g.name}</p>
+        <div class="chips">${SUBJECTS.map(x => {
+          const c = communityId(gi, x.key);
+          return `<button type="button" class="cb cb--ban" data-c="${c}" aria-pressed="${!!stuBans[c]}">${subjectName(gi, x)}</button>`;
+        }).join('')}</div>`).join('');
+      document.getElementById('accGrades').innerHTML = GRADES.map((g, i) =>
+        `<button type="button" class="cb" data-g="${i}" aria-pressed="${accSel.grades.has(i)}">${g.name}</button>`).join('');
+      document.getElementById('accSubjects').innerHTML = SUBJECTS.map(x =>
+        `<button type="button" class="cb" data-k="${x.key}" aria-pressed="${accSel.subjects.has(x.key)}">${x.key === 'science' ? 'علوم / علوم متكاملة' : x.name}</button>`).join('');
+    }
+
+    /* إرسال تنبيه أو رسالة */
+    document.getElementById('sendType').addEventListener('click', e => {
+      const b = e.target.closest('.ptab');
+      if (!b) return;
+      sendType = b.dataset.type;
+      document.querySelectorAll('#sendType .ptab').forEach(x => x.setAttribute('aria-selected', x === b));
+    });
+
+    document.getElementById('sendForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = document.getElementById('sendText').value.trim();
+      if (!text) return sheetMsg('sendMsg', 'اكتب النص الأول.');
+      try {
+        await addDoc(collection(db, 'users', stuId, 'inbox'), {
+          type: sendType, text, from: 'الإدارة', createdAt: serverTimestamp(), read: false
+        });
+        document.getElementById('sendText').value = '';
+        sheetMsg('sendMsg', sendType === 'alert' ? 'التنبيه وصله.' : 'الرسالة اتبعتت.', true);
+      } catch (err) { sheetMsg('sendMsg', authMessage(err)); }
+    });
+
+    /* حظر الحساب كله */
+    document.getElementById('blockBtn').addEventListener('click', async () => {
+      const s = stu();
+      if (!s) return;
+      try {
+        await updateDoc(doc(db, 'users', s.id), { blocked: !s.blocked });
+        toast(s.blocked ? 'اتفك الحظر' : 'الحساب اتوقف');
+      } catch (err) { dbError(err); }
+    });
+
+    /* حظر من مجتمع مادة معينة */
+    document.getElementById('banChips').addEventListener('click', async e => {
+      const b = e.target.closest('.cb');
+      if (!b) return;
+      const c = b.dataset.c, s = stu();
+      const ref = doc(db, 'communities', c, 'bans', s.id);
+      try {
+        if (stuBans[c]) await deleteDoc(ref);
+        else await setDoc(ref, { name: s.name, at: serverTimestamp() });
+        stuBans[c] = !stuBans[c];
+        renderStudentSheet();
+        toast((stuBans[c] ? 'اتحظر من ' : 'اتفك حظره من ') + communityLabel(c));
+      } catch (err) { dbError(err); }
+    });
+
+    /* المحتوى المتاح: أكتر أو أقل */
+    function toggleSet(set, value) {
+      if (set.has(value)) set.delete(value); else set.add(value);
+      renderStudentSheet();
+    }
+    document.getElementById('accGrades').addEventListener('click', e => {
+      const b = e.target.closest('.cb');
+      if (b) toggleSet(accSel.grades, Number(b.dataset.g));
+    });
+    document.getElementById('accSubjects').addEventListener('click', e => {
+      const b = e.target.closest('.cb');
+      if (b) toggleSet(accSel.subjects, b.dataset.k);
+    });
+
+    document.getElementById('accSave').addEventListener('click', async () => {
+      const all = accSel.grades.size === GRADES.length && accSel.subjects.size === SUBJECTS.length;
+      try {
+        await updateDoc(doc(db, 'users', stuId), {
+          access: all ? deleteField() : { grades: [...accSel.grades].sort(), subjects: [...accSel.subjects] }
+        });
+        sheetMsg('accMsg', all ? 'كل المحتوى متاح له.' : 'اتحفظت الصلاحيات.', true);
+      } catch (err) { sheetMsg('accMsg', authMessage(err)); }
+    });
+
+    document.getElementById('accReset').addEventListener('click', async () => {
+      accSel.grades   = new Set(GRADES.map((_, i) => i));
+      accSel.subjects = new Set(SUBJECTS.map(x => x.key));
+      renderStudentSheet();
+      try {
+        await updateDoc(doc(db, 'users', stuId), { access: deleteField() });
+        sheetMsg('accMsg', 'اتفتح له كل المحتوى.', true);
+      } catch (err) { sheetMsg('accMsg', authMessage(err)); }
+    });
+
+    /* مسح كل رسايله من مجتمعات الصفوف الأربعة */
+    document.getElementById('wipeMsgs').addEventListener('click', async () => {
+      const s = stu();
+      if (!s || !confirm('مسح كل رسايل ' + s.name + ' في كل المجتمعات؟')) return;
+      try {
+        let total = 0;
+        for (const c of communityIds()) {
+          const snap = await getDocs(query(collection(db, 'communities', c, 'messages'), where('uid', '==', s.id)));
+          for (let i = 0; i < snap.docs.length; i += 400) {
+            const batch = writeBatch(db);
+            snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+          total += snap.size;
+        }
+        toast('اتمسح ' + total + ' رسالة');
+      } catch (err) { dbError(err); }
+    });
+
+    document.getElementById('renameBtn').addEventListener('click', async () => {
+      const s = stu();
+      const n = s && prompt('الاسم الجديد:', s.name);
+      if (!n || n.trim().length < 2) return;
+      try { await updateDoc(doc(db, 'users', s.id), { name: n.trim() }); }
+      catch (err) { dbError(err); }
+    });
+
+    document.getElementById('deleteBtn').addEventListener('click', async () => {
+      const s = stu();
+      if (!s || !confirm('حذف ' + s.name + ' نهائياً؟')) return;
+      try { await deleteDoc(doc(db, 'users', s.id)); toast('اتحذف'); closeStudent(); }
+      catch (err) { dbError(err); }
+    });
+
+    document.getElementById('stuClose').addEventListener('click', closeStudent);
+
+    /* ==========================================================
+       الطالب: التنبيهات والرسايل
+       ========================================================== */
+    const inboxPanel  = document.getElementById('inbox');
+    const alertBanner = document.getElementById('alertBanner');
+
+    function updateBell() {
+      const n = inbox.filter(m => !m.read).length;
+      bellDot.hidden = n === 0;
+      bellDot.textContent = n;
+    }
+
+    function showAlert(text) {
+      alertBanner.textContent = '🔔 ' + text;
+      alertBanner.hidden = false;
+      alertBanner.style.animation = 'none';
+      void alertBanner.offsetWidth;
+      alertBanner.style.animation = '';
+      clearTimeout(showAlert.t);
+      showAlert.t = setTimeout(() => { alertBanner.hidden = true; }, 9000);
+    }
+    alertBanner.addEventListener('click', () => { alertBanner.hidden = true; });
+
+    function openInbox() {
+      const when = m => m.createdAt?.toDate?.()
+        .toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) || 'الآن';
+
+      document.getElementById('inboxList').innerHTML = inbox.length ? inbox.map((m, i) => `
+        <div class="row" style="--i:${Math.min(i, 8)}">
+          <div class="row__info">
+            <b>${m.type === 'alert' ? '🔔 تنبيه' : '✉️ رسالة'} من ${esc(m.from || 'الإدارة')}</b>
+            <span style="direction:rtl;text-align:right;white-space:pre-wrap;color:var(--txt)">${esc(m.text)}</span>
+          </div>
+          ${m.read ? '' : '<span class="chip">جديد</span>'}
+          <div class="row__acts" style="font-size:12px;color:var(--mut)">${when(m)}</div>
+        </div>`).join('') : '<p class="empty">مفيش رسايل لسه.</p>';
+
+      inboxPanel.classList.add('is-open');
+      inboxPanel.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+
+      const unread = inbox.filter(m => !m.read);            // علّم الكل مقروء
+      if (unread.length && auth.currentUser) {
+        const batch = writeBatch(db);
+        unread.forEach(m => batch.update(doc(db, 'users', auth.currentUser.uid, 'inbox', m.id), { read: true }));
+        batch.commit().catch(() => {});
+      }
+    }
+
+    function closeInbox() {
+      inboxPanel.classList.remove('is-open');
+      inboxPanel.setAttribute('aria-hidden', 'true');
+      if (!panel.classList.contains('is-open') && !chat.classList.contains('is-open')) document.body.style.overflow = '';
+    }
+
+    bellBtn.addEventListener('click', openInbox);
+    document.getElementById('inboxClose').addEventListener('click', closeInbox);
+
+    /* ==========================================================
+       دارك / لايت
+       الافتراضي: زي النظام. لما الطالب يدوس بيتحفظ اختياره.
+       ========================================================== */
+    const themeBtn = document.getElementById('themeBtn');
+    const isDark = () => {
+      const t = document.documentElement.dataset.theme;
+      return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    };
+
+    function paintTheme() {
+      themeBtn.firstElementChild.textContent = isDark() ? '☀️' : '🌙';
+      themeBtn.setAttribute('aria-label', isDark() ? 'الوضع الفاتح' : 'الوضع الغامق');
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const next = isDark() ? 'light' : 'dark';
+      const root = document.documentElement;
+      root.classList.add('theme-anim');                    // انتقال ناعم للألوان
+      root.dataset.theme = next;
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      paintTheme();
+      themeBtn.classList.remove('spin'); void themeBtn.offsetWidth; themeBtn.classList.add('spin');
+      setTimeout(() => root.classList.remove('theme-anim'), 500);
+    });
+    paintTheme();
 
     /* ---- الأحداث ---- */
     seg.addEventListener('click', e => {
