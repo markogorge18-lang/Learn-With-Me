@@ -1190,6 +1190,7 @@
     .gate__ic { display: inline-block; animation: wait-bob 2.4s ease-in-out infinite; }
     .gate__card .btn:first-of-type { background: #25d366; color: #fff; box-shadow: 0 5px 0 #17913f; }
     .gate__card .btn:first-of-type:active { box-shadow: 0 1px 0 #17913f; }
+    .gate__card .btn.btn--help { background: var(--card); color: var(--txt); box-shadow: inset 0 0 0 2px #25d366; }
 
     /* التنبيه (toast): نطّة ناعمة */
     .toast { transition: opacity .3s, transform .5s cubic-bezier(.2, 1.5, .4, 1); box-shadow: 0 10px 28px rgba(0, 0, 0, .3); }
@@ -1575,6 +1576,7 @@
       <div class="addbox">
         <h3>الحظر</h3>
         <div class="ctl"><span>الحساب كله</span><button class="tool" id="blockBtn" type="button"></button></div>
+        <div class="ctl"><span>إجبار دخول جروب الواتساب</span><button class="tool" id="groupBtn" type="button"></button></div>
         <p class="note-s">حظر من مجتمع مادة معينة:</p>
         <div id="banChips"></div>
       </div>
@@ -1657,16 +1659,13 @@
     </div>
   </div>
 
-  <!-- ========== بوابة جروب الواتساب: قبل أي حاجة ========== -->
+  <!-- ========== بوابة جروب الواتساب: بتظهر للطالب اللي الأدمن فعّلها له بس ========== -->
   <div class="gate" id="joinGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
     <div class="gate__card">
       <div class="gate__ic">💬</div>
-      <h2 id="gateTitle">اشترك في الجروب الأول</h2>
-      <p>قبل ما تدخل الموقع لازم تشترك في جروب الواتساب بتاعنا، عشان توصلك كل الأخبار والدروس الجديدة.</p>
-      <a class="btn" id="gateJoin" href="https://chat.whatsapp.com/Fx8Mpx8MwN3DdUPn71knpK?s=cl&amp;p=a&amp;ilr=4&amp;iam=0" target="_blank" rel="noopener">1) افتح الجروب واشترك</a>
-      <button class="btn" id="gateDone" type="button" disabled>2) اشتركت ✅ كمّل</button>
-      <p class="note-s" id="gateHint" style="margin:10px 0 0">افتح الجروب الأول عشان الزرار التاني يشتغل.</p>
-      <button class="gate__admin" id="gateAdmin" type="button">دخول الأدمن</button>
+      <h2 id="gateTitle">يجب الدخول في هذا الجروب للمتابعة</h2>
+      <a class="btn" id="gateJoin" href="https://chat.whatsapp.com/Fx8Mpx8MwN3DdUPn71knpK?s=cl&amp;p=a&amp;ilr=4&amp;iam=0" target="_blank" rel="noopener">ادخل الجروب</a>
+      <a class="btn btn--help" id="gateHelp" href="https://wa.me/201094393622" target="_blank" rel="noopener">لو واقف معاك حاجة كلّم الأدمن</a>
     </div>
   </div>
 
@@ -1825,30 +1824,15 @@
       document.body.style.overflow = 'hidden';
     }
 
-    /* ---- بوابة جروب الواتساب ---- */
+    /* ---- بوابة جروب الواتساب: الأدمن بيفعّلها لكل طالب لوحده، وتفضل لحد ما يلغيها ---- */
     const joinGate = document.getElementById('joinGate');
-    const ratePanel = document.getElementById('ratePanel');
-    const gateDone = document.getElementById('gateDone');
-    let gateBypass = false, gateTimer = null;
-    const hasJoined = () => { try { return localStorage.getItem('wa_joined') === '1'; } catch (e) { return false; } };
+    let myNeedGroup = false;
     function updateGate() {
-      const show = !hasJoined() && !currentRole && !gateBypass;
+      const show = myNeedGroup && !currentRole;
       joinGate.hidden = !show;
       if (show) document.body.style.overflow = 'hidden';
       else if (!document.querySelector('.panel.is-open') && !modal.classList.contains('is-open')) document.body.style.overflow = '';
     }
-    document.getElementById('gateJoin').addEventListener('click', () => {
-      document.getElementById('gateHint').textContent = 'بعد ما تشترك ارجع هنا واضغط الزرار التاني.';
-      clearTimeout(gateTimer);
-      gateTimer = setTimeout(() => { gateDone.disabled = false; }, 4000);
-    });
-    gateDone.addEventListener('click', () => {
-      try { localStorage.setItem('wa_joined', '1'); } catch (e) {}
-      updateGate();
-    });
-    document.getElementById('gateAdmin').addEventListener('click', () => {
-      gateBypass = true; updateGate(); openLogin('admin');
-    });
 
     function closeLogin() {
       if (waiting) { waiting = false; signOut(auth); }          // قفل وهو مستني الموافقة
@@ -1856,7 +1840,6 @@
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
-      if (!currentRole) gateBypass = false;
       updateGate();
     }
 
@@ -2247,6 +2230,8 @@
         meCrown.hidden = myBadge !== '👑';
         myAccess = d.access || null;
         if (JSON.stringify(myAccess) !== before) refreshAccess();
+        myNeedGroup = !!d.needGroup;
+        updateGate();
       }, () => {}));
 
       let first = true;
@@ -2299,7 +2284,7 @@
       myName = null; myAccess = null; inbox = [];
       meAvatar.hidden = true; meLetter.hidden = true; meCrown.hidden = true; myBadge = ''; closeAvMenu();
       document.getElementById('devSection').hidden = !!currentRole;
-      if (currentRole) gateBypass = false;
+      myNeedGroup = false;
       updateGate();
       if (!user || currentRole) {      // ممكن تتنادى بدري قبل ما الشاشة تخلص تحميل
         try { closeDevPanel(); } catch (e) {}
@@ -3540,6 +3525,7 @@
       state.textContent = s.blocked ? 'متوقف' : 'نشط';
       state.className = 'chip' + (s.blocked ? ' chip--off' : '');
       document.getElementById('blockBtn').textContent = s.blocked ? 'فك الحظر' : 'حظر الحساب';
+      document.getElementById('groupBtn').textContent = s.needGroup ? 'إلغاء الإجبار' : 'تفعيل الإجبار';
 
       document.getElementById('banChips').innerHTML = GRADES.map((g, gi) => `
         <p class="note-s">${g.name}</p>
@@ -3581,6 +3567,16 @@
       try {
         await updateDoc(doc(db, 'users', s.id), { blocked: !s.blocked });
         toast(s.blocked ? 'اتفك الحظر' : 'الحساب اتوقف');
+      } catch (err) { dbError(err); }
+    });
+
+    /* إجبار الطالب على دخول جروب الواتساب (بتفضل ظاهرة له لحد ما الأدمن يلغيها) */
+    document.getElementById('groupBtn').addEventListener('click', async () => {
+      const s = stu();
+      if (!s) return;
+      try {
+        await updateDoc(doc(db, 'users', s.id), { needGroup: !s.needGroup });
+        toast(s.needGroup ? 'اتلغى إجبار الجروب' : 'اتفعّل إجبار الجروب على الطالب');
       } catch (err) { dbError(err); }
     });
 
