@@ -2183,7 +2183,14 @@
       catch (err) { console.error(err); failed.push('profile'); }
       try {
         await deleteUser(user);
-        toast('اتحذف حسابك. تقدر تسجّل من جديد.');
+        toast('اتحذف حسابك. هترجع للبداية...');
+        /* رجّع الموقع كأنك أول مرة تفتحه: خروج + مسح كل اللي متخزّن على الجهاز + إعادة تحميل */
+        try { await signOut(auth); } catch (e) {}
+        try { localStorage.clear(); } catch (e) {}      // بوابة الواتساب، الثيم... إلخ
+        try { sessionStorage.clear(); } catch (e) {}
+        try { document.documentElement.removeAttribute('data-theme'); } catch (e) {}
+        try { closeAvMenu(); closeChat(); closeInbox(); closePanel(); } catch (e) {}
+        setTimeout(() => location.replace(location.pathname), 1200);
       } catch (err) {
         console.error(err);
         toast(err.code === 'auth/requires-recent-login'
