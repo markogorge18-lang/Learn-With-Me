@@ -532,7 +532,7 @@
     .tabmenu[aria-expanded="true"] .tabmenu__ic i:nth-child(2) { opacity: 0; }
     .tabmenu[aria-expanded="true"] .tabmenu__ic i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
     .tabmenu__cur { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tablist { display: flex; flex-direction: column; gap: 8px; animation: pane-in .3s cubic-bezier(.2, 1.4, .4, 1); }
+    .tablist { display: flex; flex-direction: column; gap: 8px; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; animation: pane-in .3s cubic-bezier(.2, 1.4, .4, 1); }
     .tablist[hidden] { display: none; }
     .tablist .ptab { width: 100%; text-align: start; border-radius: 16px; }
     .tablist .ptab[aria-selected="true"] { transform: none; }
@@ -1728,7 +1728,7 @@
       const show = !hasJoined() && !currentRole && !gateBypass;
       joinGate.hidden = !show;
       if (show) document.body.style.overflow = 'hidden';
-      else if (!anyPanelOpen() && !modal.classList.contains('is-open')) document.body.style.overflow = '';
+      else if (!document.querySelector('.panel.is-open') && !modal.classList.contains('is-open')) document.body.style.overflow = '';
     }
     document.getElementById('gateJoin').addEventListener('click', () => {
       document.getElementById('gateHint').textContent = 'بعد ما تشترك ارجع هنا واضغط الزرار التاني.';
@@ -2158,7 +2158,11 @@
 
     onAuthStateChanged(auth, async user => {
       if (roleUnsub) { roleUnsub(); roleUnsub = null; }
-      await applyUser(user);
+      try { await applyUser(user); }
+      catch (err) {                       // لو حاجة فشلت: الصفوف تفضل ظاهرة ونعرف السبب
+        console.error(err);
+        try { buildHome(); toast('⚠️ خطأ: ' + (err?.message || err)); } catch (e2) {}
+      }
       const email = (user?.email || '').toLowerCase();
       if (!user || !email || email === OWNER_EMAIL) return;
 
@@ -2528,7 +2532,14 @@
 
     /* ---- أحداث اللوحة ---- */
     pTabs.addEventListener('click', e => {
-      if (e.target.closest('#tabMenuBtn')) { tabsOpen = !tabsOpen; return renderTabs(); }
+      if (e.target.closest('#tabMenuBtn')) {            // من غير إعادة بناء: عشان حركة ☰ ← ✕ تتشاف
+        tabsOpen = !tabsOpen;
+        const btn = document.getElementById('tabMenuBtn'), list = document.getElementById('tabList');
+        btn.setAttribute('aria-expanded', tabsOpen);
+        list.hidden = !tabsOpen;
+        const pill = btn.querySelector('.pill'); if (pill) pill.hidden = tabsOpen;
+        return;
+      }
       const b = e.target.closest('.ptab');
       if (b) { tabsOpen = false; setTab(b.dataset.tab); }
     });
