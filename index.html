@@ -2131,11 +2131,8 @@
       const user = auth.currentUser;
       if (!user || currentRole) return;
       if (!confirm('هتحذف حسابك وكل بياناتك نهائياً وترجع من الصفر. متأكد؟')) return;
-      const pw = prompt('اكتب كلمة السر لتأكيد الحذف:');
-      if (!pw) return;
-      try {
-        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
-      } catch (err) { toast('كلمة السر غلط.'); return; }
+      const word = prompt('للتأكيد اكتب كلمة: حذف');
+      if (!word || word.trim() !== 'حذف') { if (word !== null) toast('لازم تكتب كلمة حذف بالظبط.'); return; }
       try {
         for (const sub of ['inbox']) {
           const snap = await getDocs(collection(db, 'users', user.uid, sub));
@@ -2151,7 +2148,7 @@
         toast('اتحذف حسابك. تقدر تسجّل من جديد.');
       } catch (err) {
         console.error(err);
-        toast('معرفناش نحذف الحساب. جرّب تاني.');
+        toast(err.code === 'auth/requires-recent-login' ? 'سجّل خروج وادخل تاني، وبعدين جرّب الحذف.' : 'معرفناش نحذف الحساب. جرّب تاني.');
       }
     }
     [meAvatar, meLetter].forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openAvMenu(); }));
