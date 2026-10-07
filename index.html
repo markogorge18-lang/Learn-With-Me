@@ -524,7 +524,18 @@
     .panel__bar .chip { background: rgba(255,255,255,.2); color: #fff; }
     .panel__bar .close { position: static; background: rgba(255,255,255,.15); color: #fff; }
 
-    .panel__tabs { display: flex; gap: 8px; padding: 14px 18px 0; overflow-x: auto; }
+    .panel__tabs { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px 0; }
+    .tabmenu { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 18px; border: 0; border-radius: 18px; background: var(--card); color: var(--txt); box-shadow: var(--sh); font: 700 16px 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; text-align: start; }
+    .tabmenu__ic { display: grid; gap: 4px; flex: none; }
+    .tabmenu__ic i { display: block; width: 22px; height: 3px; border-radius: 3px; background: var(--blue); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), opacity .2s; }
+    .tabmenu[aria-expanded="true"] .tabmenu__ic i:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .tabmenu[aria-expanded="true"] .tabmenu__ic i:nth-child(2) { opacity: 0; }
+    .tabmenu[aria-expanded="true"] .tabmenu__ic i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .tabmenu__cur { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tablist { display: flex; flex-direction: column; gap: 8px; animation: pane-in .3s cubic-bezier(.2, 1.4, .4, 1); }
+    .tablist[hidden] { display: none; }
+    .tablist .ptab { width: 100%; text-align: start; border-radius: 16px; }
+    .tablist .ptab[aria-selected="true"] { transform: none; }
     .ptab {
       flex: none;
       padding: 10px 20px;
@@ -1062,6 +1073,18 @@
     .avatar[hidden], #nameField[hidden], .avatar-pick__btn [hidden] { display: none !important; }
     .helper__ic--dev { background: var(--pink); box-shadow: 0 5px 0 #c93d65; }
     .helper__go--dev { background: var(--blue); }
+    /* التقييمات */
+    .stars { display: flex; justify-content: center; gap: 6px; direction: ltr; margin: 6px 0 14px; }
+    .stars button { border: 0; background: none; padding: 0 2px; font-size: 40px; line-height: 1; color: var(--mut); opacity: .45; cursor: pointer; transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+    .stars button.on { color: #f5b301; opacity: 1; }
+    .stars button:hover { transform: scale(1.15); }
+    .stars button:focus-visible { outline: 3px solid var(--pink); border-radius: 8px; }
+    .star-row { color: #f5b301; letter-spacing: 2px; direction: ltr; unicode-bidi: isolate; }
+    .rate-sum { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding: 14px 16px; border-radius: 22px; background: var(--card); box-shadow: var(--sh); }
+    .rate-sum big { font-size: 40px; font-weight: 800; line-height: 1; }
+    .rate-sum > div { flex: 1; min-width: 0; }
+    .rate-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mut); }
+    .rate-bar i { display: block; height: 6px; border-radius: 6px; background: #f5b301; min-width: 2px; }
     /* بوابة جروب الواتساب */
     .gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px; background: var(--bg); overflow-y: auto; }
     .gate[hidden] { display: none; }
@@ -1143,6 +1166,14 @@
         <span class="helper__ic helper__ic--dev">👨‍🏫</span>
         <span><b>اكتب كلمة للمستر</b><small>وشوف ردوده عليك</small></span>
         <span class="helper__go helper__go--dev">اكتب</span>
+      </button>
+
+      <h3 class="sec-title">تقييمك</h3>
+      <p class="page__sub">قيّم المنصة بالنجوم واكتب رأيك فيها.</p>
+      <button class="helper" id="rateBtn" style="--i:4">
+        <span class="helper__ic helper__ic--dev">⭐</span>
+        <span><b>قيّم المنصة</b><small>اختار عدد النجوم واكتب رأيك</small></span>
+        <span class="helper__go helper__go--dev">قيّم</span>
       </button>
     </div>
   </main>
@@ -1321,6 +1352,12 @@
         <div id="teacherList"></div>
       </section>
 
+      <!-- التقييمات -->
+      <section id="tabRatings" hidden>
+        <div id="ratingSum"></div>
+        <div id="ratingList"></div>
+      </section>
+
       <!-- سجل الأدمن (للمدير الرئيسي بس) -->
       <section id="tabLog" hidden>
         <p class="note-s">كل الأدمن وضيوف الأدمن. اضغط على أي واحد عشان تشوف كل حاجة عملها.</p>
@@ -1494,6 +1531,24 @@
       <button class="close" id="inboxClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body" id="inboxList"></div>
+  </div>
+
+  <!-- ========== تقييم الطالب ========== -->
+  <div class="panel" id="ratePanel" aria-hidden="true">
+    <div class="panel__bar">
+      <div><h2>تقييمك</h2></div>
+      <button class="close" id="rateClose" aria-label="إغلاق">×</button>
+    </div>
+    <div class="panel__body">
+      <form class="addbox" id="rateForm" novalidate>
+        <h3>إيه رأيك في المنصة؟</h3>
+        <div class="stars" id="rateStars" role="radiogroup" aria-label="التقييم من خمسة نجوم"></div>
+        <label class="field"><textarea class="rtl" id="rateText" rows="4" maxlength="600" placeholder="اكتب رأيك هنا..."></textarea></label>
+        <div class="msg" id="rateMsg" role="alert"></div>
+        <button class="btn" type="submit" id="rateSend">إرسال التقييم</button>
+        <p class="note-s" id="rateNote" style="margin-top:8px"></p>
+      </form>
+    </div>
   </div>
 
   <!-- ========== بوابة جروب الواتساب: قبل أي حاجة ========== -->
@@ -2074,7 +2129,7 @@
       document.getElementById('devSection').hidden = !!currentRole;
       if (currentRole) gateBypass = false;
       updateGate();
-      if (!user || currentRole) closeDevPanel();
+      if (!user || currentRole) { closeDevPanel(); closeRatePanel(); }
 
       const isStudent = !!user && !currentRole;
       if (isStudent) watchStudent(user);
@@ -2089,6 +2144,7 @@
       if (user) watchBadWords(); else { if (badUnsub) badUnsub(); badUnsub = null; badWords = []; }
       if (isStudent) { track({}); if ('Notification' in window && Notification.permission === 'granted') enablePush(true); }
       pushBtn.hidden = !(isStudent && VAPID_KEY && 'Notification' in window && Notification.permission === 'default');
+      if (currentRole === 'owner') watchRatings(); else stopRatingsWatch();
       if (currentRole === 'owner') watchDevNotes(); else stopDevWatch();   // كلمات الطلاب للمطور
       if (!currentRole) closePanel();
       if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
@@ -2138,6 +2194,7 @@
     const TABS = {
       students: ['الطلاب', 'tabStudents'],
       devnotes: ['كلمات الطلاب', 'tabDevNotes'],
+      ratings:  ['تقييمات', 'tabRatings'],
       admins:   ['الأدمن', 'tabAdmins'],
       log:      ['سجل الأدمن', 'tabLog'],
       guests:   ['ضيف أدمن', 'tabGuests'],
@@ -2172,13 +2229,14 @@
     function openPanel() {
       if (!currentRole) return;
       closePanel();
+      tabsOpen = false;
       document.getElementById('pRole').textContent = ROLE_LABELS[currentRole];
 
       if (currentRole === 'guest') {
         panelTabs = [...(anyGrant('community') ? ['communities'] : []),
                      ...(anyGrant('content') ? ['content'] : [])];
         if (!panelTabs.length) return toast('مفيش صلاحيات متاحة لحسابك.');
-      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'reports', 'stats', 'admins', 'guests', 'log', 'communities', 'content'] : ['communities', 'stats', 'content'];
+      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'ratings', 'reports', 'stats', 'admins', 'guests', 'log', 'communities', 'content'] : ['communities', 'stats', 'content'];
       const allowed = panelTabs;
 
       if (currentRole === 'owner') {
@@ -2213,13 +2271,23 @@
       document.body.style.overflow = '';
     }
 
-    let panelTabs = [], curTab = null;
+    let panelTabs = [], curTab = null, tabsOpen = false;
 
     function renderTabs() {
-      pTabs.innerHTML = panelTabs.map(k => {
-        const n = k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : k === 'reports' ? reportCount : 0;
-        return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${k === curTab}">${TABS[k][0]}${n ? ` <span class="pill">${n}</span>` : ''}</button>`;
-      }).join('');
+      const count = k => k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : k === 'reports' ? reportCount : 0;
+      const total = panelTabs.reduce((a, k) => a + count(k), 0);
+      pTabs.innerHTML = `
+        <button class="tabmenu" type="button" id="tabMenuBtn" aria-expanded="${tabsOpen}" aria-controls="tabList">
+          <span class="tabmenu__ic" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="tabmenu__cur">${curTab && TABS[curTab] ? TABS[curTab][0] : 'الأقسام'}</span>
+          ${total && !tabsOpen ? `<span class="pill">${total}</span>` : ''}
+        </button>
+        <div class="tablist" id="tabList" role="tablist" ${tabsOpen ? '' : 'hidden'}>
+          ${panelTabs.map(k => {
+            const n = count(k);
+            return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${k === curTab}">${TABS[k][0]}${n ? ` <span class="pill">${n}</span>` : ''}</button>`;
+          }).join('')}
+        </div>`;
     }
 
     function setTab(key) {
@@ -2232,6 +2300,7 @@
       if (key === 'communities') { loadCounts(); updateNotifBox(); }
       if (key === 'devnotes') { renderDevNotes(); markDevSeen(); }
       if (key === 'reports') renderReports();
+      if (key === 'ratings') renderRatings();
       if (key === 'stats') loadStats(statDays);
     }
 
@@ -2458,8 +2527,9 @@
 
     /* ---- أحداث اللوحة ---- */
     pTabs.addEventListener('click', e => {
+      if (e.target.closest('#tabMenuBtn')) { tabsOpen = !tabsOpen; return renderTabs(); }
       const b = e.target.closest('.ptab');
-      if (b) setTab(b.dataset.tab);
+      if (b) { tabsOpen = false; setTab(b.dataset.tab); }
     });
     panelBtn.addEventListener('click', openPanel);
     document.getElementById('panelClose').addEventListener('click', closePanel);
@@ -3521,7 +3591,7 @@
     };
     const noteTarget = n => n.to === 'teacher' ? 'teacher' : 'dev';   // الكلمات القديمة = للمبرمج
 
-    const anyPanelOpen = () => [panel, chat, inboxPanel, stuPanel, devPanel].some(el => el.classList.contains('is-open'));
+    const anyPanelOpen = () => [panel, chat, inboxPanel, stuPanel, devPanel, ratePanel].some(el => el.classList.contains('is-open'));
 
     function renderMyNotes() {
       const mine = myNotes.filter(n => noteTarget(n) === devTarget);
@@ -3596,6 +3666,124 @@
     function renderDevSection() { document.getElementById('devSection').hidden = !!currentRole; }
     renderDevSection();
     updateGate();
+
+    /* ==========================================================
+       التقييمات: الطالب يختار نجوم (1-5) ويكتب رأيه
+       كل طالب له تقييم واحد (ratings/{uid}) وينفع يعدّله
+       المالك: تاب "تقييمات"
+       ========================================================== */
+    const ratePanel = document.getElementById('ratePanel');
+    const rateForm  = document.getElementById('rateForm');
+    const rateText  = document.getElementById('rateText');
+    const rateStarsEl = document.getElementById('rateStars');
+    let rateValue = 0;
+    const starsText = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+    function paintStars() {
+      rateStarsEl.innerHTML = [1, 2, 3, 4, 5].map(n =>
+        `<button type="button" data-n="${n}" class="${n <= rateValue ? 'on' : ''}" role="radio" aria-checked="${n === rateValue}" aria-label="${n} من 5">★</button>`).join('');
+    }
+    rateStarsEl.addEventListener('click', e => {
+      const b = e.target.closest('button[data-n]');
+      if (!b) return;
+      rateValue = Number(b.dataset.n);
+      paintStars();
+    });
+
+    async function openRatePanel() {
+      const user = auth.currentUser;
+      if (!user) { wantedGrade = null; return openLogin('student'); }
+      if (currentRole) return;
+      rateValue = 0; rateText.value = '';
+      sheetMsg('rateMsg', '');
+      document.getElementById('rateNote').textContent = '';
+      paintStars();
+      ratePanel.classList.add('is-open');
+      ratePanel.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      try {
+        const snap = await getDoc(doc(db, 'ratings', user.uid));
+        if (snap.exists() && ratePanel.classList.contains('is-open')) {
+          const r = snap.data();
+          rateValue = Number(r.stars) || 0;
+          rateText.value = r.text || '';
+          paintStars();
+          document.getElementById('rateNote').textContent = 'ده تقييمك الحالي. تقدر تعدّله وتبعته تاني.';
+        }
+      } catch (e) { /* مش مهم */ }
+    }
+
+    function closeRatePanel() {
+      ratePanel.classList.remove('is-open');
+      ratePanel.setAttribute('aria-hidden', 'true');
+      if (!anyPanelOpen()) document.body.style.overflow = '';
+    }
+
+    rateForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      const text = rateText.value.trim();
+      if (!user || currentRole) return;
+      if (!rateValue) return sheetMsg('rateMsg', 'اختار عدد النجوم الأول.');
+      if (text.length < 3) return sheetMsg('rateMsg', 'اكتب رأيك الأول.');
+      const btn = document.getElementById('rateSend');
+      btn.disabled = true;
+      try {
+        if (!myName) myName = await loadStudentName(user);
+        await setDoc(doc(db, 'ratings', user.uid), {
+          uid: user.uid, name: myName || user.displayName || 'طالب', email: user.email || '',
+          stars: rateValue, text, createdAt: serverTimestamp()
+        });
+        sheetMsg('rateMsg', 'وصل تقييمك. شكراً ليك 💙', true);
+      } catch (err) { sheetMsg('rateMsg', authMessage(err)); }
+      finally { btn.disabled = false; }
+    });
+
+    document.getElementById('rateBtn').addEventListener('click', openRatePanel);
+    document.getElementById('rateClose').addEventListener('click', closeRatePanel);
+
+    /* ---- المالك: تاب التقييمات ---- */
+    let ratings = [], ratingsUnsub = null;
+    function watchRatings() {
+      stopRatingsWatch();
+      ratingsUnsub = onSnapshot(query(collection(db, 'ratings'), orderBy('createdAt', 'desc'), limit(300)), snap => {
+        ratings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (curTab === 'ratings' && panel.classList.contains('is-open')) renderRatings();
+      }, () => {});
+    }
+    function stopRatingsWatch() { if (ratingsUnsub) ratingsUnsub(); ratingsUnsub = null; ratings = []; }
+
+    function renderRatings() {
+      const total = ratings.length;
+      const avg = total ? ratings.reduce((a, r) => a + (Number(r.stars) || 0), 0) / total : 0;
+      const bars = [5, 4, 3, 2, 1].map(n => {
+        const c = ratings.filter(r => Number(r.stars) === n).length;
+        return `<div class="rate-bar"><span>${n} ★</span><i style="width:${total ? Math.max(c / total * 100, 1) : 0}%"></i><span>${c}</span></div>`;
+      }).join('');
+      document.getElementById('ratingSum').innerHTML = `
+        <div class="rate-sum">
+          <div style="flex:0 0 auto;text-align:center"><big>${total ? avg.toFixed(1) : '–'}</big><div class="star-row">${starsText(Math.round(avg))}</div><small class="note-s">${total} تقييم</small></div>
+          <div>${bars}</div>
+        </div>`;
+      document.getElementById('ratingList').innerHTML = total ? ratings.map((r, i) => `
+        <div class="dev" data-id="${esc(r.id)}" style="--i:${Math.min(i, 8)}">
+          <div class="dev__head">
+            ${avatarImg(students.find(x => x.id === r.uid)?.photo, 'avatar--sm', r.name)}
+            <div><b>${esc(r.name)}</b><small>${esc(r.email)} · ${whenOf(r)}</small></div>
+            <span class="star-row">${starsText(Number(r.stars) || 0)}</span>
+          </div>
+          <p class="dev__text">${esc(r.text)}</p>
+          <div class="row__acts"><button data-act="delete" class="danger">حذف</button></div>
+        </div>`).join('') : '<p class="empty">لسه مفيش تقييمات من الطلاب.</p>';
+    }
+
+    document.getElementById('ratingList').addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-act="delete"]');
+      if (!btn) return;
+      const r = ratings.find(x => x.id === btn.closest('.dev').dataset.id);
+      if (!r || !confirm('حذف تقييم ' + r.name + '؟')) return;
+      try { await deleteDoc(doc(db, 'ratings', r.id)); toast('اتحذف'); } catch (err) { dbError(err); }
+    });
 
     /* ---- المالك ---- */
     const devListEl   = document.getElementById('devList');
