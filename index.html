@@ -4053,28 +4053,65 @@
       const hash = t => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h + ':' + t.length; };
       const typing = () => [...document.querySelectorAll('textarea, input')]
         .some(el => el.value && el.offsetParent !== null && !['checkbox', 'file', 'hidden', 'radio'].includes(el.type));
-      let base = null, busy = false, told = false;
+      let base = null, busy = false, told = false, published = null, appUnsub = null;
+
+      /* نسخة الصفحة الحالية على السيرفر (هيدر خفيف، أو هاش المحتوى لو مفيش هيدر) */
+      async function serverSig() {
+        let r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+        if (!r.ok) return null;
+        let v = [r.headers.get('etag'), r.headers.get('last-modified'), r.headers.get('content-length')].filter(Boolean).join('|');
+        if (!v) { r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return null; v = hash(await r.text()); }
+        return v;
+      }
+
+      function applyUpdate(target) {
+        if (typing()) { if (!told) { told = true; toast('🔄 في نسخة جديدة، هتتحدّث أول ما تخلّص الكتابة.'); } return false; }
+        try {                                            // حماية من لفّة تحديث لو الكاش لسه قديم
+          const t = JSON.parse(sessionStorage.getItem('lwm_try') || 'null');
+          if (t && t.v === target && Date.now() - t.at < 60000) return false;
+          sessionStorage.setItem('lwm_try', JSON.stringify({ v: target, at: Date.now() }));
+          sessionStorage.setItem('lwm_updated', '1');
+        } catch (e) {}
+        toast('🔄 في تحديث جديد... بيتحدّث دلوقتي');
+        setTimeout(() => location.reload(), 700);
+        return true;
+      }
+
       async function check() {
         if (busy) return;
         busy = true;
         try {
-          let r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });   // خفيف: بيقرا الهيدر بس
-          if (!r.ok) return;
-          let v = [r.headers.get('etag'), r.headers.get('last-modified'), r.headers.get('content-length')].filter(Boolean).join('|');
-          if (!v) {                                                                          // السيرفر مش بيبعت هيدر: قارن المحتوى
-            r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
-            if (!r.ok) return;
-            v = hash(await r.text());
+          const v = await serverSig();
+          if (!v) return;
+          if (base === null) base = v;
+          else if (v !== base) { applyUpdate(v); return; }
+          // المدير بيعلن النسخة اللي فتحها: باقي الأجهزة بتتحدّث فوراً (Firestore لحظي)
+          if (isOwner() && published !== base) {
+            published = base;
+            setDoc(doc(db, 'settings', 'app'), { build: base, at: serverTimestamp() }).catch(() => { published = null; });
           }
-          if (base === null) { base = v; return; }
-          if (v === base) return;
-          if (typing()) { if (!told) { told = true; toast('🔄 في نسخة جديدة، هتتحدّث أول ما تخلّص الكتابة.'); } return; }
-          location.reload();
         } catch (e) { /* مفيش نت: نحاول بعدين */ }
         finally { busy = false; }
       }
+
+      /* استماع لحظي لإعلان النسخة الجديدة (للمسجّلين دخول) */
+      onAuthStateChanged(auth, u => {
+        if (appUnsub) { appUnsub(); appUnsub = null; }
+        if (!u) return;
+        appUnsub = onSnapshot(doc(db, 'settings', 'app'), snap => {
+          const b = snap.data()?.build;
+          if (b && base && b !== base) applyUpdate(b);
+        }, () => {});
+      });
+
+      try {                                                   // بعد إعادة التحميل: رسالة تأكيد على الشاشة
+        if (sessionStorage.getItem('lwm_updated')) {
+          sessionStorage.removeItem('lwm_updated');
+          setTimeout(() => toast('✅ تم التحديث'), 600);
+        }
+      } catch (e3) {}
       check();
-      setInterval(check, 4000);
+      setInterval(check, 2000);                               // وكمان فحص كل ثانيتين للي مش مسجّل دخول
       document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
       window.addEventListener('online', check);
     })();
