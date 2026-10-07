@@ -1103,6 +1103,96 @@
     .bars i { flex: 1; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--blue); }
     .hbar { height: 8px; border-radius: 99px; background: var(--blue); margin-top: 4px; }
     #statsBox h3 { margin: 18px 0 8px; }
+  
+    /* ==========================================================
+       11) لمسة أخيرة: تناسق الشكل والحركة
+       الفكرة: كل حاجة تتضغط بإحساس "زرار فيزيائي" واحد،
+       والحركة بتظهر كرد على فعل الطالب (فتح، ضغط، اختيار) مش للزينة.
+       ========================================================== */
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    ::selection { background: var(--lime); color: var(--ink); }
+
+    /* شريط تمرير رفيع */
+    * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--mut) 55%, transparent) transparent; }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-thumb { border-radius: 8px; background: color-mix(in srgb, var(--mut) 50%, transparent); }
+
+    /* ضغطة موحّدة على كل الأزرار الكبيرة (نفس إحساس الزرار الأخضر) */
+    .helper, .subj, .gcard, .community-btn, .tool, .cb, .ptab, .tabmenu, .close, .back, .google, .row__acts button {
+      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), box-shadow .25s, background-color .25s, color .25s, opacity .25s, filter .25s;
+    }
+    .helper:active, .subj:active, .community-btn:active, .tabmenu:active { transform: translateY(2px) scale(.985); }
+    .gcard:active { transform: translateY(2px) scale(.96) rotate(0); }
+    .tool:active, .cb:active, .ptab:active, .close:active, .back:active, .google:active, .row__acts button:active { transform: scale(.94); }
+    .gcard--locked:hover, .subj--locked:hover { transform: none; }
+
+    /* كروت اللوحة: حدّ خفيف بيفرّق الكارت في الفاتح والغامق */
+    .dev, .row, .rate-sum, .addbox, .stat, .lesson {
+      box-shadow: var(--sh), 0 0 0 1px color-mix(in srgb, var(--txt) 7%, transparent);
+    }
+    @media (hover: hover) {
+      .dev, .row { transition: transform .3s cubic-bezier(.3, 1.4, .5, 1), box-shadow .3s; }
+      .dev:hover, .row:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20, 18, 59, .12), 0 0 0 1px color-mix(in srgb, var(--blue) 25%, transparent); }
+    }
+
+    /* خانات الكتابة: نفس شكل الإدخال في كل مكان + وهج عند الكتابة */
+    .field textarea {
+      width: 100%; padding: 13px 14px; border: 2px solid transparent; border-radius: 14px;
+      background: var(--bg); color: var(--txt); font: 500 16px/1.7 'IBM Plex Sans Arabic', sans-serif;
+      resize: vertical; transition: border-color .25s, box-shadow .25s;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 18%, transparent); }
+    .field textarea::placeholder, .field input::placeholder { color: var(--mut); opacity: .7; }
+
+    /* تركيز الكيبورد واضح في كل حتة */
+    :where(button, a, [role="tab"], [role="radio"]):focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+
+    /* اللوحات: ظل علوي بيظهر لما تنزل بالسكرول + دخول ناعم */
+    .panel__body { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+    .panel.is-open .panel__body > section:not([hidden]), .panel.is-open .panel__body > .addbox, .panel.is-open .panel__body > div:not([hidden]) {
+      animation: pane-in .45s cubic-bezier(.2, 1.3, .4, 1) backwards;
+    }
+
+    /* قائمة الأقسام: العناصر بتنزل ورا بعض لما تفتحها */
+    .tablist:not([hidden]) .ptab { animation: pane-in .38s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+    .tablist:not([hidden]) .ptab:nth-child(2) { animation-delay: 30ms; }
+    .tablist:not([hidden]) .ptab:nth-child(3) { animation-delay: 60ms; }
+    .tablist:not([hidden]) .ptab:nth-child(4) { animation-delay: 90ms; }
+    .tablist:not([hidden]) .ptab:nth-child(5) { animation-delay: 120ms; }
+    .tablist:not([hidden]) .ptab:nth-child(6) { animation-delay: 150ms; }
+    .tablist:not([hidden]) .ptab:nth-child(n+7) { animation-delay: 180ms; }
+    .ptab[aria-selected="true"] { box-shadow: 0 4px 0 color-mix(in srgb, var(--blue) 60%, #000); }
+    .tabmenu { border-inline-start: 5px solid var(--blue); }
+
+    /* العدّادات: نبضة واحدة وقت ظهورها */
+    .pill, .dot { animation: pill-pop .5s cubic-bezier(.3, 1.8, .5, 1) backwards; }
+    @keyframes pill-pop { from { transform: scale(0); } }
+
+    /* النجوم: النجمة المختارة تنطّ */
+    .stars button { transition: transform .25s cubic-bezier(.3, 1.8, .5, 1), color .2s, opacity .2s; }
+    .stars button.pop { animation: star-pop .45s cubic-bezier(.3, 1.8, .5, 1); }
+    @keyframes star-pop { 0% { transform: scale(.6) rotate(-25deg); } 60% { transform: scale(1.3) rotate(8deg); } 100% { transform: none; } }
+
+    /* بوابة الجروب: خلفية بألوان المنصة + دخول بنطّة */
+    .gate { background:
+      radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--blue) 30%, transparent), transparent 45%),
+      radial-gradient(circle at 10% 95%, color-mix(in srgb, var(--pink) 24%, transparent), transparent 45%),
+      var(--bg); }
+    .gate:not([hidden]) .gate__card { animation: card-in .6s cubic-bezier(.2, 1.4, .4, 1) backwards; }
+    .gate__ic { display: inline-block; animation: wait-bob 2.4s ease-in-out infinite; }
+    .gate__card .btn:first-of-type { background: #25d366; color: #fff; box-shadow: 0 5px 0 #17913f; }
+    .gate__card .btn:first-of-type:active { box-shadow: 0 1px 0 #17913f; }
+
+    /* التنبيه (toast): نطّة ناعمة */
+    .toast { transition: opacity .3s, transform .5s cubic-bezier(.2, 1.5, .4, 1); box-shadow: 0 10px 28px rgba(0, 0, 0, .3); }
+
+    /* النوافذ: خلفية أنعم */
+    .modal { backdrop-filter: blur(8px) saturate(1.2); }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .gate__ic, .stars button.pop, .pill, .dot { animation: none !important; }
+    }
   </style>
 </head>
 
@@ -2130,7 +2220,10 @@
       document.getElementById('devSection').hidden = !!currentRole;
       if (currentRole) gateBypass = false;
       updateGate();
-      if (!user || currentRole) { closeDevPanel(); closeRatePanel(); }
+      if (!user || currentRole) {      // ممكن تتنادى بدري قبل ما الشاشة تخلص تحميل
+        try { closeDevPanel(); } catch (e) {}
+        try { closeRatePanel(); } catch (e) {}
+      }
 
       const isStudent = !!user && !currentRole;
       if (isStudent) watchStudent(user);
@@ -3690,15 +3783,15 @@
     let rateValue = 0;
     const starsText = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-    function paintStars() {
+    function paintStars(pop = 0) {
       rateStarsEl.innerHTML = [1, 2, 3, 4, 5].map(n =>
-        `<button type="button" data-n="${n}" class="${n <= rateValue ? 'on' : ''}" role="radio" aria-checked="${n === rateValue}" aria-label="${n} من 5">★</button>`).join('');
+        `<button type="button" data-n="${n}" class="${n <= rateValue ? 'on' : ''}${n === pop ? ' pop' : ''}" role="radio" aria-checked="${n === rateValue}" aria-label="${n} من 5">★</button>`).join('');
     }
     rateStarsEl.addEventListener('click', e => {
       const b = e.target.closest('button[data-n]');
       if (!b) return;
       rateValue = Number(b.dataset.n);
-      paintStars();
+      paintStars(rateValue);
     });
 
     async function openRatePanel() {
