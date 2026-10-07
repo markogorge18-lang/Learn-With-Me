@@ -843,6 +843,7 @@
       transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
       animation: fab-in .7s .4s cubic-bezier(.2, 1.5, .4, 1) backwards;
     }
+    .theme-btn[hidden] { display: none; }
     .theme-btn:hover { transform: scale(1.1) rotate(-12deg); }
     .theme-btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
     .theme-btn.spin span { display: inline-block; animation: spin .6s cubic-bezier(.3, 1.4, .5, 1); }
@@ -1512,7 +1513,7 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <button class="theme-btn" id="themeBtn" type="button"><span></span></button>
+  <button class="theme-btn" id="themeBtn" type="button" hidden><span></span></button>
 
   <!-- ========== المجتمع ========== -->
   <div class="panel chat" id="chat" aria-hidden="true">
@@ -1682,7 +1683,8 @@
     import {
       getAuth, GoogleAuthProvider, signInWithPopup,
       signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      sendPasswordResetEmail, updateProfile, signOut, onAuthStateChanged
+      sendPasswordResetEmail, updateProfile, signOut, onAuthStateChanged,
+      deleteUser, reauthenticateWithCredential, EmailAuthProvider
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
@@ -2101,12 +2103,14 @@
       const hasPhoto = !meAvatar.hidden;
       avMenu = document.createElement('div');
       avMenu.style.cssText = 'position:fixed;top:64px;inset-inline-start:12px;z-index:9999;display:grid;gap:8px;padding:10px;background:var(--bg);color:var(--txt);border:3px solid var(--txt);border-radius:14px';
-      avMenu.innerHTML = '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>' + (hasPhoto ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '');
+      avMenu.innerHTML = (currentRole ? '' : '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>') + (hasPhoto && !currentRole ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '') + '<button class="tool" data-a="logout">🚪 تسجيل خروج</button>' + (currentRole ? '' : '<button class="tool danger" data-a="delacc">⚠️ حذف الحساب</button>');
       avMenu.addEventListener('click', async e => {
         const a = e.target.closest('button')?.dataset.a;
         if (!a) return;
         const ref = doc(db, 'users', auth.currentUser.uid);
         closeAvMenu();
+        if (a === 'logout') { signOut(auth); return; }
+        if (a === 'delacc') { deleteMyAccount(); return; }
         try {
           if (a === 'del') { await updateDoc(ref, { photo: '' }); toast('اتمسحت الصورة'); }
           if (a === 'pick') {
@@ -2121,6 +2125,34 @@
         } catch (err) { dbError(err); }
       });
       document.body.appendChild(avMenu);
+    }
+    /* حذف الحساب نهائياً: بياناتك + الحساب نفسه، وتقدر تسجّل من الأول */
+    async function deleteMyAccount() {
+      const user = auth.currentUser;
+      if (!user || currentRole) return;
+      if (!confirm('هتحذف حسابك وكل بياناتك نهائياً وترجع من الصفر. متأكد؟')) return;
+      const pw = prompt('اكتب كلمة السر لتأكيد الحذف:');
+      if (!pw) return;
+      try {
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+      } catch (err) { toast('كلمة السر غلط.'); return; }
+      try {
+        for (const sub of ['inbox']) {
+          const snap = await getDocs(collection(db, 'users', user.uid, sub));
+          for (let i = 0; i < snap.docs.length; i += 400) {
+            const batch = writeBatch(db);
+            snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+            await batch.commit();
+          }
+        }
+        stopStudentWatch();
+        await deleteDoc(doc(db, 'users', user.uid));
+        await deleteUser(user);
+        toast('اتحذف حسابك. تقدر تسجّل من جديد.');
+      } catch (err) {
+        console.error(err);
+        toast('معرفناش نحذف الحساب. جرّب تاني.');
+      }
     }
     [meAvatar, meLetter].forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openAvMenu(); }));
     document.addEventListener('click', e => { if (avMenu && !avMenu.contains(e.target)) closeAvMenu(); });
@@ -2212,7 +2244,7 @@
     }
 
     async function applyUser(user) {
-      loginBtn.textContent = user ? 'خروج' : 'دخول';
+      loginBtn.textContent = 'دخول'; loginBtn.hidden = !!user;
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
       myName = null; myAccess = null; inbox = [];
@@ -2226,6 +2258,7 @@
       }
 
       const isStudent = !!user && !currentRole;
+      if (currentRole) { meLetter.hidden = false; meLetter.textContent = initial(user.displayName || user.email || 'A'); }
       if (isStudent) watchStudent(user);
       bellBtn.hidden = !isStudent;
       updateBell();
@@ -2918,6 +2951,7 @@
         if (key === name) { el.classList.remove('screen-in'); void el.offsetWidth; el.classList.add('screen-in'); }
       });
       if (name !== 'lessons') stopLessons();
+      document.getElementById('themeBtn').hidden = name === 'home';
       window.scrollTo(0, 0);
     }
 
