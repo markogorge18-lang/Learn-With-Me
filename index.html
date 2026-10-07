@@ -1062,6 +1062,16 @@
     .avatar[hidden], #nameField[hidden], .avatar-pick__btn [hidden] { display: none !important; }
     .helper__ic--dev { background: var(--pink); box-shadow: 0 5px 0 #c93d65; }
     .helper__go--dev { background: var(--blue); }
+    /* بوابة جروب الواتساب */
+    .gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px; background: var(--bg); overflow-y: auto; }
+    .gate[hidden] { display: none; }
+    .gate__card { width: min(420px, 100%); padding: 28px 22px; border-radius: 28px; background: var(--card); box-shadow: var(--sh); text-align: center; }
+    .gate__ic { font-size: 54px; line-height: 1; margin-bottom: 10px; }
+    .gate__card h2 { margin: 0 0 8px; }
+    .gate__card p { color: var(--mut); margin: 0 0 18px; }
+    .gate__card .btn { width: 100%; margin-top: 10px; text-align: center; text-decoration: none; display: block; box-sizing: border-box; }
+    .gate__card .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .gate__admin { margin-top: 16px; border: 0; background: none; color: var(--mut); font: 500 13px 'IBM Plex Sans Arabic', sans-serif; text-decoration: underline; cursor: pointer; }
   
     .chat__pin { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: var(--lime); color: var(--ink); font-size: 13px; font-weight: 600; }
     .chat__pin span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1117,13 +1127,21 @@
     <p class="page__sub">محتاج مساعدة؟ كلّم مساعد على واتساب مباشرة.</p>
     <div id="helperList"></div>
 
-    <!-- كلمة للمطور: بعيد عن الواتساب -->
+    <!-- كلمة للمبرمج + كلمة للمستر: بعيد عن الواتساب -->
     <div id="devSection">
-      <h3 class="sec-title">كلمة للمطور</h3>
-      <p class="page__sub">فكرة، مشكلة، أو شكر؟ اكتبها هنا وهتوصل للمطور مباشرة من غير واتساب، وهيرد عليك هنا.</p>
+      <h3 class="sec-title">كلمة للمبرمج</h3>
+      <p class="page__sub">مشكلة في الموقع أو فكرة لتطويره؟ اكتبها هنا وهتوصل للمبرمج مباشرة، وهيرد عليك هنا.</p>
       <button class="helper" id="devBtn" style="--i:2">
-        <span class="helper__ic helper__ic--dev">✍️</span>
-        <span><b>اكتب كلمة للمطور</b><small>وشوف ردوده عليك</small></span>
+        <span class="helper__ic helper__ic--dev">💻</span>
+        <span><b>اكتب كلمة للمبرمج</b><small>وشوف ردوده عليك</small></span>
+        <span class="helper__go helper__go--dev">اكتب</span>
+      </button>
+
+      <h3 class="sec-title">كلمة للمستر</h3>
+      <p class="page__sub">سؤال أو شكر أو ملاحظة للمستر؟ اكتبها هنا وهتوصله مباشرة، وهيرد عليك هنا.</p>
+      <button class="helper" id="teacherBtn" style="--i:3">
+        <span class="helper__ic helper__ic--dev">👨‍🏫</span>
+        <span><b>اكتب كلمة للمستر</b><small>وشوف ردوده عليك</small></span>
         <span class="helper__go helper__go--dev">اكتب</span>
       </button>
     </div>
@@ -1297,7 +1315,10 @@
           <span class="note-s" id="devTotal"></span>
           <button class="cb" type="button" id="devPendingOnly" aria-pressed="false">من غير رد بس</button>
         </div>
+        <h3 class="sec-title" style="margin-top:14px">💻 كلمات للمبرمج <span class="note-s" id="devCountDev"></span></h3>
         <div id="devList"></div>
+        <h3 class="sec-title" style="margin-top:22px">👨‍🏫 كلمات للمستر <span class="note-s" id="devCountTeacher"></span></h3>
+        <div id="teacherList"></div>
       </section>
 
       <!-- سجل الأدمن (للمدير الرئيسي بس) -->
@@ -1475,16 +1496,29 @@
     <div class="panel__body" id="inboxList"></div>
   </div>
 
+  <!-- ========== بوابة جروب الواتساب: قبل أي حاجة ========== -->
+  <div class="gate" id="joinGate" role="dialog" aria-modal="true" aria-labelledby="gateTitle" hidden>
+    <div class="gate__card">
+      <div class="gate__ic">💬</div>
+      <h2 id="gateTitle">اشترك في الجروب الأول</h2>
+      <p>قبل ما تدخل الموقع لازم تشترك في جروب الواتساب بتاعنا، عشان توصلك كل الأخبار والدروس الجديدة.</p>
+      <a class="btn" id="gateJoin" href="https://chat.whatsapp.com/Fx8Mpx8MwN3DdUPn71knpK?s=cl&amp;p=a&amp;ilr=4&amp;iam=0" target="_blank" rel="noopener">1) افتح الجروب واشترك</a>
+      <button class="btn" id="gateDone" type="button" disabled>2) اشتركت ✅ كمّل</button>
+      <p class="note-s" id="gateHint" style="margin:10px 0 0">افتح الجروب الأول عشان الزرار التاني يشتغل.</p>
+      <button class="gate__admin" id="gateAdmin" type="button">دخول الأدمن</button>
+    </div>
+  </div>
+
   <!-- ========== كلمة للمطور (الطالب) ========== -->
   <div class="panel" id="devPanel" aria-hidden="true">
     <div class="panel__bar">
-      <div><h2>كلمة للمطور</h2></div>
+      <div><h2 id="devPanelTitle">كلمة للمبرمج</h2></div>
       <button class="close" id="devClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body">
       <form class="addbox" id="devForm" novalidate>
         <h3>اكتب كلمتك</h3>
-        <p class="note-s">بتوصل للمطور مباشرة، ورده هيظهر لك هنا وفي 🔔 الرسايل.</p>
+        <p class="note-s" id="devPanelNote">بتوصل للمبرمج مباشرة، وردّه هيظهر لك هنا وفي 🔔 الرسايل.</p>
         <label class="field"><textarea class="rtl" id="devText" rows="4" maxlength="600" placeholder="اكتب هنا..."></textarea></label>
         <div class="msg" id="devMsg" role="alert"></div>
         <button class="btn" type="submit" id="devSend">إرسال</button>
@@ -1629,12 +1663,38 @@
       document.body.style.overflow = 'hidden';
     }
 
+    /* ---- بوابة جروب الواتساب ---- */
+    const joinGate = document.getElementById('joinGate');
+    const gateDone = document.getElementById('gateDone');
+    let gateBypass = false, gateTimer = null;
+    const hasJoined = () => { try { return localStorage.getItem('wa_joined') === '1'; } catch (e) { return false; } };
+    function updateGate() {
+      const show = !hasJoined() && !currentRole && !gateBypass;
+      joinGate.hidden = !show;
+      if (show) document.body.style.overflow = 'hidden';
+      else if (!anyPanelOpen() && !modal.classList.contains('is-open')) document.body.style.overflow = '';
+    }
+    document.getElementById('gateJoin').addEventListener('click', () => {
+      document.getElementById('gateHint').textContent = 'بعد ما تشترك ارجع هنا واضغط الزرار التاني.';
+      clearTimeout(gateTimer);
+      gateTimer = setTimeout(() => { gateDone.disabled = false; }, 4000);
+    });
+    gateDone.addEventListener('click', () => {
+      try { localStorage.setItem('wa_joined', '1'); } catch (e) {}
+      updateGate();
+    });
+    document.getElementById('gateAdmin').addEventListener('click', () => {
+      gateBypass = true; updateGate(); openLogin('admin');
+    });
+
     function closeLogin() {
       if (waiting) { waiting = false; signOut(auth); }          // قفل وهو مستني الموافقة
       if (pendingUser) { signOut(auth); pendingUser = null; }   // قفل قبل كتابة الاسم
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      if (!currentRole) gateBypass = false;
+      updateGate();
     }
 
     /* ---- اختيار الصف قبل جوجل ---- */
@@ -2012,6 +2072,8 @@
       myName = null; myAccess = null; inbox = [];
       meAvatar.hidden = true; meLetter.hidden = true; closeAvMenu();
       document.getElementById('devSection').hidden = !!currentRole;
+      if (currentRole) gateBypass = false;
+      updateGate();
       if (!user || currentRole) closeDevPanel();
 
       const isStudent = !!user && !currentRole;
@@ -3452,25 +3514,35 @@
     const devForm  = document.getElementById('devForm');
     const devText  = document.getElementById('devText');
     const devMine  = document.getElementById('devMine');
-    let myNotes = [], devMineUnsub = null, lastDevSend = 0;
+    let myNotes = [], devMineUnsub = null, lastDevSend = 0, devTarget = 'dev';
+    const TARGETS = {
+      dev:     { label: 'المبرمج', title: 'كلمة للمبرمج', who: 'المبرمج', icon: '💻' },
+      teacher: { label: 'المستر',  title: 'كلمة للمستر',  who: 'المستر',  icon: '👨‍🏫' }
+    };
+    const noteTarget = n => n.to === 'teacher' ? 'teacher' : 'dev';   // الكلمات القديمة = للمبرمج
 
     const anyPanelOpen = () => [panel, chat, inboxPanel, stuPanel, devPanel].some(el => el.classList.contains('is-open'));
 
     function renderMyNotes() {
-      devMine.innerHTML = myNotes.length ? myNotes.map((n, i) => `
+      const mine = myNotes.filter(n => noteTarget(n) === devTarget);
+      devMine.innerHTML = mine.length ? mine.map((n, i) => `
         <div class="dev" style="--i:${Math.min(i, 8)}">
           <p class="dev__text">${esc(n.text)}</p>
           <div class="m__meta" style="margin-top:4px;color:var(--mut)">${whenOf(n)}</div>
           ${n.reply
-            ? `<div class="dev__reply"><b>رد المطور:</b> ${esc(n.reply)}</div>`
+            ? `<div class="dev__reply"><b>رد ${TARGETS[devTarget].who}:</b> ${esc(n.reply)}</div>`
             : '<span class="chip chip--off" style="display:inline-block;margin-top:8px">لسه ما اتردش عليها</span>'}
         </div>`).join('') : '<p class="empty">لسه ما كتبتش حاجة.</p>';
     }
 
-    function openDevPanel() {
+    function openDevPanel(target = 'dev') {
       const user = auth.currentUser;
       if (!user) { wantedGrade = null; return openLogin('student'); }
       if (currentRole) return;
+      devTarget = target === 'teacher' ? 'teacher' : 'dev';
+      const T = TARGETS[devTarget];
+      document.getElementById('devPanelTitle').textContent = T.title;
+      document.getElementById('devPanelNote').textContent = 'بتوصل ل' + T.who + ' مباشرة، وردّه هيظهر لك هنا وفي 🔔 الرسايل.';
       stopDevMine();
       myNotes = [];
       devText.value = '';
@@ -3508,23 +3580,26 @@
         if (!myName) myName = await loadStudentName(user);
         await addDoc(collection(db, 'devNotes'), {
           uid: user.uid, name: myName || user.displayName || 'طالب', email: user.email || '',
-          text, seen: false, createdAt: serverTimestamp()
+          text, to: devTarget, seen: false, createdAt: serverTimestamp()
         });
         lastDevSend = Date.now();
         devText.value = '';
-        sheetMsg('devMsg', 'وصلت للمطور. شكراً ليك 💙', true);
+        sheetMsg('devMsg', 'وصلت ل' + TARGETS[devTarget].who + '. شكراً ليك 💙', true);
       } catch (err) { sheetMsg('devMsg', authMessage(err)); }
       finally { btn.disabled = false; }
     });
 
-    document.getElementById('devBtn').addEventListener('click', openDevPanel);
+    document.getElementById('devBtn').addEventListener('click', () => openDevPanel('dev'));
+    document.getElementById('teacherBtn').addEventListener('click', () => openDevPanel('teacher'));
     document.getElementById('devClose').addEventListener('click', closeDevPanel);
 
     function renderDevSection() { document.getElementById('devSection').hidden = !!currentRole; }
     renderDevSection();
+    updateGate();
 
     /* ---- المالك ---- */
     const devListEl   = document.getElementById('devList');
+    const teacherListEl = document.getElementById('teacherList');
     const devReplyForm = document.getElementById('devReplyForm');
     const devReplyText = document.getElementById('devReplyText');
     let devNotes = [], devUnsub = null, devFirst = true, devOnlyPending = false, replyingId = null;
@@ -3539,10 +3614,11 @@
           if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) return;
           const n = ch.doc.data();
           const snippet = String(n.text).slice(0, 70);
-          showAlert('✍️ كلمة جديدة من ' + n.name + ': ' + snippet);
+          const T = TARGETS[noteTarget(n)];
+          showAlert(T.icon + ' كلمة جديدة ل' + T.who + ' من ' + n.name + ': ' + snippet);
           beep();
           if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-            new Notification('Learn With Me — كلمة للمطور', { body: n.name + ': ' + snippet });
+            new Notification('Learn With Me — ' + T.title, { body: n.name + ': ' + snippet });
           }
         });
         devFirst = false;
@@ -3566,11 +3642,9 @@
       } catch (e) { /* مش مهم */ }
     }
 
-    function renderDevNotes() {
-      const pending = devNotes.filter(n => !n.reply).length;
-      document.getElementById('devTotal').textContent = 'الكلمات: ' + devNotes.length + ' · من غير رد: ' + pending;
-      const list = devNotes.filter(n => !devOnlyPending || !n.reply);
-      devListEl.innerHTML = list.length ? list.map((n, i) => `
+    function noteCard(n, i) {
+      const T = TARGETS[noteTarget(n)];
+      return `
         <div class="dev" data-id="${esc(n.id)}" style="--i:${Math.min(i, 8)}">
           <div class="dev__head">
             ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm', n.name)}
@@ -3583,7 +3657,19 @@
             <button data-act="reply">${n.reply ? 'تعديل الرد' : 'رد'}</button>
             <button data-act="delete" class="danger">حذف</button>
           </div>
-        </div>`).join('') : `<p class="empty">${devOnlyPending ? 'كل الكلمات اتردّ عليها.' : 'لسه مفيش كلمات من الطلاب.'}</p>`;
+        </div>`;
+    }
+
+    function renderDevNotes() {
+      const pending = devNotes.filter(n => !n.reply).length;
+      document.getElementById('devTotal').textContent = 'الكلمات: ' + devNotes.length + ' · من غير رد: ' + pending;
+      [['dev', devListEl, 'devCountDev'], ['teacher', teacherListEl, 'devCountTeacher']].forEach(([key, el, countId]) => {
+        const all  = devNotes.filter(n => noteTarget(n) === key);
+        const list = all.filter(n => !devOnlyPending || !n.reply);
+        document.getElementById(countId).textContent = '(' + all.length + ')';
+        el.innerHTML = list.length ? list.map(noteCard).join('')
+          : `<p class="empty">${devOnlyPending ? 'كل الكلمات اتردّ عليها.' : 'لسه مفيش كلمات من الطلاب.'}</p>`;
+      });
     }
 
     function closeReply() {
@@ -3593,14 +3679,14 @@
       sheetMsg('devReplyMsg', '');
     }
 
-    devListEl.addEventListener('click', async e => {
+    const onNoteClick = async e => {
       const btn = e.target.closest('button[data-act]');
       if (!btn) return;
       const n = devNotes.find(x => x.id === btn.closest('.dev').dataset.id);
       if (!n) return;
       if (btn.dataset.act === 'reply') {
         replyingId = n.id;
-        document.getElementById('devReplyTo').textContent = n.name;
+        document.getElementById('devReplyTo').textContent = n.name + ' (كلمة ل' + TARGETS[noteTarget(n)].who + ')';
         document.getElementById('devReplyQuote').textContent = n.text;
         devReplyText.value = n.reply || '';
         sheetMsg('devReplyMsg', '');
@@ -3615,7 +3701,9 @@
           toast('اتحذفت');
         } catch (err) { dbError(err); }
       }
-    });
+    };
+    devListEl.addEventListener('click', onNoteClick);
+    teacherListEl.addEventListener('click', onNoteClick);
 
     devReplyForm.addEventListener('submit', async e => {
       e.preventDefault();
@@ -3631,8 +3719,8 @@
         });
         /* يوصل للطالب كإشعار في 🔔 */
         await addDoc(collection(db, 'users', n.uid, 'inbox'), {
-          type: 'message', from: 'المطور', read: false, createdAt: serverTimestamp(),
-          text: (n.reply ? 'تعديل على رد المطور: ' : 'رد المطور على كلمتك: ') + text
+          type: 'message', from: TARGETS[noteTarget(n)].who, read: false, createdAt: serverTimestamp(),
+          text: (n.reply ? 'تعديل على رد ' : 'رد ') + TARGETS[noteTarget(n)].who + ' على كلمتك: ' + text
         });
         closeReply();
         toast('الرد اتبعت للطالب');
