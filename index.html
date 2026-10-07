@@ -1720,6 +1720,7 @@
 
     /* ---- بوابة جروب الواتساب ---- */
     const joinGate = document.getElementById('joinGate');
+    const ratePanel = document.getElementById('ratePanel');
     const gateDone = document.getElementById('gateDone');
     let gateBypass = false, gateTimer = null;
     const hasJoined = () => { try { return localStorage.getItem('wa_joined') === '1'; } catch (e) { return false; } };
@@ -3672,7 +3673,6 @@
        كل طالب له تقييم واحد (ratings/{uid}) وينفع يعدّله
        المالك: تاب "تقييمات"
        ========================================================== */
-    const ratePanel = document.getElementById('ratePanel');
     const rateForm  = document.getElementById('rateForm');
     const rateText  = document.getElementById('rateText');
     const rateStarsEl = document.getElementById('rateStars');
