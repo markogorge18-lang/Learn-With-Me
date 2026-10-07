@@ -1049,6 +1049,13 @@
     .avatar--sm { width: 34px; height: 34px; font-size: 16px; }
     .avatar--lg { width: 84px; height: 84px; margin-bottom: 10px; font-size: 36px; }
     .row__info b .avatar { margin-inline-end: 8px; }
+    .pwrap { position: relative; display: inline-block; flex: none; vertical-align: middle; }
+    .pwrap[hidden] { display: none; }
+    .crown { position: absolute; top: -13px; left: 50%; transform: translateX(-50%) rotate(-10deg); font-size: 18px; line-height: 1; pointer-events: none; z-index: 2; font-style: normal; }
+    .crown[hidden] { display: none; }
+    .pwrap--lg .crown { top: -20px; font-size: 28px; }
+    .nb { font-size: .95em; margin-inline-start: 2px; }
+    .cb--badge { font-size: 22px; padding: 6px 14px; }
     .nav__btns { align-items: center; }
     .avatar-pick { display: grid; place-items: center; margin-bottom: 14px; }
     .avatar-pick__btn { position: relative; width: 112px; height: 112px; padding: 0; border: 3px dashed var(--blue); border-radius: 50%; background: var(--bg); color: var(--txt); font: 600 13px 'IBM Plex Sans Arabic', sans-serif; cursor: pointer; overflow: hidden; transition: transform .25s cubic-bezier(.3, 1.6, .5, 1); }
@@ -1210,7 +1217,7 @@
     <nav class="nav">
       <div class="logo"><i>L</i><span dir="ltr">Learn With Me</span></div>
       <div class="nav__btns">
-        <img class="avatar" id="meAvatar" alt="" hidden><span class="avatar avatar--letter" id="meLetter" hidden></span>
+        <span class="pwrap" id="mePwrap"><img class="avatar" id="meAvatar" alt="" hidden><span class="avatar avatar--letter" id="meLetter" hidden></span><i class="crown" id="meCrown" hidden>👑</i></span>
         <button class="btn btn--small bell" id="bellBtn" aria-label="الرسايل والتنبيهات" hidden>🔔<span class="dot" id="bellDot" hidden>0</span></button>
         <button class="btn btn--small bell" id="panelBtn" hidden>لوحة التحكم<span class="dot" id="panelDot" hidden>0</span></button>
         <button class="btn btn--small" id="loginBtn">دخول</button>
@@ -1551,7 +1558,7 @@
       <button class="close" id="stuClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body">
-      <img class="avatar avatar--lg" id="stuPhoto" alt="" hidden><span class="avatar avatar--lg avatar--letter" id="stuLetter" hidden></span>
+      <span class="pwrap pwrap--lg"><img class="avatar avatar--lg" id="stuPhoto" alt="" hidden><span class="avatar avatar--lg avatar--letter" id="stuLetter" hidden></span><i class="crown" id="stuCrown" hidden>👑</i></span>
       <p class="stu-mail" id="stuMail"></p>
 
       <form class="addbox" id="sendForm" novalidate>
@@ -1584,6 +1591,14 @@
       <div class="addbox">
         <h3>رسايله في المجتمع</h3>
         <button class="btn" id="wipeMsgs" type="button" style="background:var(--pink);box-shadow:0 5px 0 #c93d65">مسح كل رسايله</button>
+      </div>
+
+      <div class="addbox" id="badgeBox">
+        <h3>الشارة</h3>
+        <p class="note-s">من الأقل للأعلى: 🥉 🥈 🥇 🏅 🏆 👑. كل ما تختار واحدة بتحل محل اللي قبلها. التاج بيظهر فوق الصورة، والباقي جنب الاسم.</p>
+        <div class="chips" id="badgeChips"></div>
+        <div class="msg" id="badgeMsg" role="alert"></div>
+        <button class="tool danger" id="badgeClear" type="button" hidden style="width:100%">شيل الشارة</button>
       </div>
 
       <div class="addbox" id="stuAdminBox">
@@ -1898,7 +1913,18 @@
 
     /* ---- تبديل شاشات النافذة ---- */
     const nameForm  = document.getElementById('nameView');
+    /* الاسم: حروف ومسافات بس (من غير أرقام أو رموز أو إيموجي) */
+    const NAME_BAD = /[^\p{L}\p{M}\s]/gu;
+    const validName = n => /^[\p{L}\p{M}\s]+$/u.test(n);
     const nameInput = document.getElementById('nameInput');
+    nameInput.addEventListener('input', () => {
+      const v = nameInput.value;
+      if (NAME_BAD.test(v)) {
+        nameInput.value = v.replace(NAME_BAD, '');
+        nameError.textContent = 'الاسم حروف بس. من غير أرقام أو رموز أو إيموجي.';
+      }
+      NAME_BAD.lastIndex = 0;
+    });
     const nameError = document.getElementById('nameError');
     let loginGrade = null;    // الصف اللي الطالب اختاره في نافذة الدخول
     let signupGrade = null;   // الصف اللي هيتسجل بيه (حساب جديد)
@@ -1914,6 +1940,10 @@
     const avatarHint    = document.getElementById('avatarHint');
 
     const initial = n => ([...String(n || '').trim()][0] || '?').toUpperCase();
+    /* الشارات: من الأقل للأعلى. الأعلى بتحل محل اللي قبلها. التاج بيظهر فوق الصورة والباقي جنب الاسم */
+    const BADGES = ['🥉', '🥈', '🥇', '🏅', '🏆', '👑'];
+    const nameBadge = b => (BADGES.includes(b) && b !== '👑') ? ` <span class="nb">${b}</span>` : '';
+    const withCrown = (html, b, extra = '') => b === '👑' ? `<span class="pwrap ${extra}">${html}<i class="crown">👑</i></span>` : html;
     const safePhoto = p => /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p || '') ? p : '';
 
     function fileToAvatar(file, size = 160) {
@@ -2042,6 +2072,11 @@
         shake(nameForm);
         return;
       }
+      if (name && !validName(name)) {
+        nameError.textContent = 'الاسم حروف بس. من غير أرقام أو رموز أو إيموجي.';
+        shake(nameForm);
+        return;
+      }
       const btn = nameForm.querySelector('button[type="submit"]');
       btn.disabled = true;
       const wasExisting = pendingExisting;
@@ -2133,26 +2168,34 @@
       if (!confirm('هتحذف حسابك وكل بياناتك نهائياً وترجع من الصفر. متأكد؟')) return;
       const word = prompt('للتأكيد اكتب كلمة: حذف');
       if (!word || word.trim() !== 'حذف') { if (word !== null) toast('لازم تكتب كلمة حذف بالظبط.'); return; }
+      /* مسح البيانات: لو القواعد منعت حاجة منها نكمّل ونحذف الحساب نفسه */
+      const failed = [];
+      stopStudentWatch();
       try {
-        for (const sub of ['inbox']) {
-          const snap = await getDocs(collection(db, 'users', user.uid, sub));
-          for (let i = 0; i < snap.docs.length; i += 400) {
-            const batch = writeBatch(db);
-            snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          }
+        const snap = await getDocs(collection(db, 'users', user.uid, 'inbox'));
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const batch = writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+          await batch.commit();
         }
-        stopStudentWatch();
-        await deleteDoc(doc(db, 'users', user.uid));
+      } catch (err) { console.error(err); failed.push('inbox'); }
+      try { await deleteDoc(doc(db, 'users', user.uid)); }
+      catch (err) { console.error(err); failed.push('profile'); }
+      try {
         await deleteUser(user);
         toast('اتحذف حسابك. تقدر تسجّل من جديد.');
       } catch (err) {
         console.error(err);
-        toast(err.code === 'auth/requires-recent-login' ? 'سجّل خروج وادخل تاني، وبعدين جرّب الحذف.' : 'معرفناش نحذف الحساب. جرّب تاني.');
+        toast(err.code === 'auth/requires-recent-login'
+          ? 'سجّل خروج وادخل تاني، وبعدين جرّب الحذف.'
+          : 'معرفناش نحذف الحساب (' + (err.code || 'error') + ')');
+        if (!failed.includes('profile')) { try { signOut(auth); } catch (e) {} }
       }
     }
     [meAvatar, meLetter].forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openAvMenu(); }));
     document.addEventListener('click', e => { if (avMenu && !avMenu.contains(e.target)) closeAvMenu(); });
+    let myBadge = '';
+    const meCrown = document.getElementById('meCrown');
     let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
     let inbox = [];        // تنبيهات ورسايل الإدارة
     let studentUnsubs = [];
@@ -2193,6 +2236,8 @@
         if (ph) meAvatar.src = ph;
         meLetter.hidden = !!ph;
         meLetter.textContent = initial(d.name);
+        myBadge = BADGES.includes(d.badge) ? d.badge : '';
+        meCrown.hidden = myBadge !== '👑';
         myAccess = d.access || null;
         if (JSON.stringify(myAccess) !== before) refreshAccess();
       }, () => {}));
@@ -2245,7 +2290,7 @@
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
       myName = null; myAccess = null; inbox = [];
-      meAvatar.hidden = true; meLetter.hidden = true; closeAvMenu();
+      meAvatar.hidden = true; meLetter.hidden = true; meCrown.hidden = true; myBadge = ''; closeAvMenu();
       document.getElementById('devSection').hidden = !!currentRole;
       if (currentRole) gateBypass = false;
       updateGate();
@@ -2449,7 +2494,7 @@
         <h3 style="margin:6px 0 10px">طلبات التسجيل <span class="pill">${waitingList.length}</span></h3>
         ${waitingList.map(s => `
           <div class="row" data-id="${esc(s.id)}">
-            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name)}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
             <span class="chip ${s.rejected ? 'chip--off' : ''}">${s.rejected ? 'مرفوض' : 'مستني'}</span>
             <div class="row__acts">
               <button data-act="approve">قبول</button>
@@ -2460,7 +2505,7 @@
 
       studentList.innerHTML = list.length ? list.map((s, i) => `
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
-          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name)}${esc(s.name)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
           <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
@@ -2796,12 +2841,12 @@
         const canReport = !currentRole && !mine && m.role === 'student';
         const roleCls = m.role === 'owner' ? 'm--owner' : (m.role === 'content' || m.role === 'guest') ? 'm--admin' : '';
         const av = mine ? '' : cont ? '<span class="avatar avatar--letter mav mav--gap"></span>'
-          : `<span class="avatar avatar--letter mav" style="background:hsl(${hue(m.name)} 62% 46%)">${esc(initial(m.name))}</span>`;
+          : withCrown(`<span class="avatar avatar--letter mav" style="background:hsl(${hue(m.name)} 62% 46%)">${esc(initial(m.name))}</span>`, m.badge);
 
         return `${sep}
           <div class="mrow ${mine ? 'mrow--me' : ''} ${cont ? 'mrow--cont' : ''}">
             <div class="m ${mine ? 'm--me' : ''} ${roleCls} ${isNew ? 'm--new' : ''} ${m.id === openId ? 'm--open' : ''}" data-id="${esc(m.id)}">
-              ${cont || mine ? '' : `<div class="m__head"><b style="color:hsl(${hue(m.name)} 60% 42%)">${esc(m.name)}</b>${badge}</div>`}
+              ${cont || mine ? '' : `<div class="m__head"><b style="color:hsl(${hue(m.name)} 60% 42%)">${esc(m.name)}</b>${nameBadge(m.badge)}${badge}</div>`}
               <div class="m__text">${esc(m.text)}</div>
               <div class="m__meta">${timeOf(m)}${m.edited ? ' · معدّلة' : ''}</div>
               <div class="m__acts">
@@ -2890,6 +2935,7 @@
         } else {
           await addDoc(collection(db, ...chatBase, 'messages'), {
             uid: myUid(), name: senderName(), role: currentRole || 'student',
+            ...(!currentRole && myBadge ? { badge: myBadge } : {}),
             text, createdAt: serverTimestamp()
           });
         }
@@ -3472,7 +3518,11 @@
     function renderStudentSheet() {
       const s = stu();
       if (!s) return closeStudent();
-      document.getElementById('stuName').textContent = s.name;
+      document.getElementById('stuName').textContent = s.name + (BADGES.includes(s.badge) && s.badge !== '👑' ? ' ' + s.badge : '');
+      document.getElementById('stuCrown').hidden = s.badge !== '👑';
+      document.getElementById('badgeChips').innerHTML = BADGES.map(b =>
+        `<button type="button" class="cb cb--badge" data-b="${b}" aria-pressed="${s.badge === b}">${b}</button>`).join('');
+      document.getElementById('badgeClear').hidden = !s.badge;
       document.getElementById('stuMail').textContent = s.email + gradeTag(s);
       const sp = safePhoto(s.photo), stuPhoto = document.getElementById('stuPhoto');
       stuPhoto.hidden = !sp;
@@ -3569,6 +3619,18 @@
       document.getElementById('stuAdminRemove').hidden = !a;
     }
 
+    document.getElementById('badgeChips').addEventListener('click', async e => {
+      const b = e.target.closest('button[data-b]')?.dataset.b;
+      if (!b || !stuId) return;
+      try { await updateDoc(doc(db, 'users', stuId), { badge: b }); sheetMsg('badgeMsg', 'اتحطت الشارة ' + b, true); }
+      catch (err) { dbError(err); }
+    });
+    document.getElementById('badgeClear').addEventListener('click', async () => {
+      if (!stuId) return;
+      try { await updateDoc(doc(db, 'users', stuId), { badge: deleteField() }); sheetMsg('badgeMsg', 'اتشالت الشارة.', true); }
+      catch (err) { dbError(err); }
+    });
+
     document.getElementById('stuAdminSave').addEventListener('click', async () => {
       const s = stu(), email = stuEmail();
       const grants = [...document.querySelectorAll('#stuGrants input:checked')].map(b => b.value);
@@ -3631,7 +3693,9 @@
       const s = stu();
       const n = s && prompt('الاسم الجديد:', s.name);
       if (!n || n.trim().length < 2) return;
-      try { await updateDoc(doc(db, 'users', s.id), { name: n.trim() }); }
+      const clean = n.trim().replace(/\s+/g, ' ');
+      if (!validName(clean)) return toast('الاسم حروف بس. من غير أرقام أو رموز أو إيموجي.');
+      try { await updateDoc(doc(db, 'users', s.id), { name: clean }); }
       catch (err) { dbError(err); }
     });
 
@@ -3710,9 +3774,9 @@
     const whenOf = m => m.createdAt?.toDate?.()
       .toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) || 'الآن';
 
-    const avatarImg = (photo, cls = '', name = '') => {
+    const avatarImg = (photo, cls = '', name = '', badge = '') => {
       const p = safePhoto(photo);
-      return p ? `<img class="avatar ${cls}" src="${p}" alt="">` : `<span class="avatar avatar--letter ${cls}">${esc(initial(name))}</span>`;
+      return withCrown(p ? `<img class="avatar ${cls}" src="${p}" alt="">` : `<span class="avatar avatar--letter ${cls}">${esc(initial(name))}</span>`, badge);
     };
 
     /* ---- الطالب ---- */
@@ -3903,7 +3967,7 @@
       document.getElementById('ratingList').innerHTML = total ? ratings.map((r, i) => `
         <div class="dev" data-id="${esc(r.id)}" style="--i:${Math.min(i, 8)}">
           <div class="dev__head">
-            ${avatarImg(students.find(x => x.id === r.uid)?.photo, 'avatar--sm', r.name)}
+            ${avatarImg(students.find(x => x.id === r.uid)?.photo, 'avatar--sm', r.name, students.find(x => x.id === r.uid)?.badge)}
             <div><b>${esc(r.name)}</b><small>${esc(r.email)} · ${whenOf(r)}</small></div>
             <span class="star-row">${starsText(Number(r.stars) || 0)}</span>
           </div>
@@ -3970,7 +4034,7 @@
       return `
         <div class="dev" data-id="${esc(n.id)}" style="--i:${Math.min(i, 8)}">
           <div class="dev__head">
-            ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm', n.name)}
+            ${avatarImg(students.find(x => x.id === n.uid)?.photo, 'avatar--sm', n.name, students.find(x => x.id === n.uid)?.badge)}
             <div><b>${esc(n.name)}</b><small>${esc(n.email)} · ${whenOf(n)}</small></div>
             <span class="chip ${n.reply ? '' : 'chip--off'}">${n.reply ? 'تم الرد' : 'من غير رد'}</span>
           </div>
