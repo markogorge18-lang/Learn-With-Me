@@ -1102,6 +1102,16 @@
     .gate__card p { color: var(--mut); margin: 0 0 18px; }
     .gate__card .btn { width: 100%; margin-top: 10px; text-align: center; text-decoration: none; display: block; box-sizing: border-box; }
     .gate__card .btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .codebox { display: inline-flex; align-items: center; gap: 6px; direction: ltr; }
+    .codebox[hidden] { display: none; }
+    .codebox code { font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1.5px; padding: 3px 8px; border-radius: 8px; background: rgba(127,127,127,.18); user-select: all; }
+    .codebox .copybtn { padding: 3px 10px; font-size: 12px; }
+    .stucode { display: block; margin-top: 2px; font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1px; color: var(--mut); direction: ltr; text-align: right; user-select: all; }
+    .annc { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #ffd23f; color: #14123b; font: 600 14px 'IBM Plex Sans Arabic', sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+    .annc[hidden] { display: none; }
+    .annc__t { flex: 1; white-space: pre-wrap; }
+    .annc button { border: 0; background: none; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
+    #maintGate { z-index: 10000; }
     .gate__admin { margin-top: 16px; border: 0; background: none; color: var(--mut); font: 500 13px 'IBM Plex Sans Arabic', sans-serif; text-decoration: underline; cursor: pointer; }
   
     .chat__pin { display: flex; gap: 10px; align-items: center; padding: 8px 14px; background: var(--lime); color: var(--ink); font-size: 13px; font-weight: 600; }
@@ -1206,6 +1216,11 @@
 </head>
 
 <body>
+
+  <div class="annc" id="annc" role="status" hidden>
+    <span aria-hidden="true">📢</span><span class="annc__t" id="anncText"></span>
+    <button type="button" id="anncX" aria-label="إغلاق الإعلان">×</button>
+  </div>
 
   <!-- ========== شاشة 1: اختار صفك ========== -->
   <header class="hero screen" id="screenHome">
@@ -1426,7 +1441,15 @@
           <div class="stat"><b id="stTotal">0</b><span>إجمالي الطلاب</span></div>
           <div class="stat"><b id="stBlocked">0</b><span>متوقفين</span></div>
         </div>
-        <label class="field"><input class="rtl" id="search" placeholder="دوّر بالاسم أو الإيميل"></label>
+        <label class="field"><input class="rtl" id="search" placeholder="دوّر بالاسم أو الإيميل أو الكود"></label>
+        <div class="chips" id="stuFilter"></div>
+        <div class="addbox" id="bulkBox" hidden>
+          <h3>إجراء جماعي</h3>
+          <p class="note-s" id="bulkCount"></p>
+          <button class="btn" id="bulkGroupOn" type="button">تفعيل إجبار الجروب</button>
+          <button class="tool" id="bulkGroupOff" type="button" style="margin-top:8px">إلغاء إجبار الجروب</button>
+          <button class="tool" id="bulkAlert" type="button" style="margin-top:8px">إرسال تنبيه</button>
+        </div>
         <div id="pendingBox"></div>
         <div id="studentList"></div>
       </section>
@@ -1504,12 +1527,35 @@
         </form>
       </section>
 
+      <section id="tabAnnounce" hidden>
+        <div class="addbox">
+          <h3>إعلان مثبّت في أول الموقع</h3>
+          <p class="note-s">بيظهر لكل الزوار والطلاب لحد ما تشيله.</p>
+          <label class="field"><textarea class="rtl" id="anncInput" rows="3" maxlength="300" placeholder="مثال: امتحان الأحد الجاي الساعة 10"></textarea></label>
+          <div class="ctl"><span id="anncState"></span></div>
+          <button class="btn" id="anncSave" type="button">نشر الإعلان</button>
+          <button class="tool" id="anncOff" type="button" style="margin-top:8px">إزالة الإعلان</button>
+        </div>
+        <div class="addbox">
+          <h3>وضع الصيانة</h3>
+          <p class="note-s">بيقفل الموقع على الطلاب برسالة، وأنت والأدمن بتفضلوا تدخلوا عادي.</p>
+          <label class="field"><textarea class="rtl" id="maintInput" rows="2" maxlength="200" placeholder="الرسالة اللي هتظهر للطلاب"></textarea></label>
+          <div class="ctl"><span id="maintState"></span><button class="tool" id="maintBtn" type="button"></button></div>
+        </div>
+      </section>
+
       <section id="tabStats" hidden>
         <div class="chips" id="statRange">
           <button class="cb" type="button" data-d="7" aria-pressed="true">7 أيام</button>
           <button class="cb" type="button" data-d="30" aria-pressed="false">30 يوم</button>
         </div>
         <div id="statsBox"><p class="empty">بيحمّل...</p></div>
+        <div class="addbox" id="exportBox" hidden>
+          <h3>تصدير ونسخة احتياطية</h3>
+          <button class="btn" id="exportResults" type="button">تنزيل نتايج الاختبارات (Excel)</button>
+          <button class="tool" id="exportBackup" type="button" style="margin-top:8px">نسخة احتياطية كاملة (JSON)</button>
+          <div class="msg" id="exportMsg" role="alert"></div>
+        </div>
       </section>
 
       <section id="tabContent" hidden>
@@ -1555,7 +1601,7 @@
   <!-- ========== التحكم في طالب (للمالك) ========== -->
   <div class="panel" id="stuPanel" aria-hidden="true">
     <div class="panel__bar">
-      <div><h2 id="stuName">طالب</h2><span class="chip" id="stuState"></span></div>
+      <div><h2 id="stuName">طالب</h2><span class="chip" id="stuState"></span> <span class="codebox" id="stuCodeBox" hidden><code id="stuCode"></code><button type="button" class="tool copybtn" id="stuCodeCopy">نسخ</button></span></div>
       <button class="close" id="stuClose" aria-label="إغلاق">×</button>
     </div>
     <div class="panel__body">
@@ -1572,6 +1618,11 @@
         <div class="msg" id="sendMsg" role="alert"></div>
         <button class="btn" type="submit">إرسال</button>
       </form>
+
+      <div class="addbox">
+        <h3>سجل الطالب</h3>
+        <div id="stuLog"></div>
+      </div>
 
       <div class="addbox">
         <h3>الحظر</h3>
@@ -1666,6 +1717,16 @@
       <h2 id="gateTitle">يجب الدخول في هذا الجروب للمتابعة</h2>
       <a class="btn" id="gateJoin" href="https://chat.whatsapp.com/Fx8Mpx8MwN3DdUPn71knpK?s=cl&amp;p=a&amp;ilr=4&amp;iam=0" target="_blank" rel="noopener">ادخل الجروب</a>
       <a class="btn btn--help" id="gateHelp" href="https://wa.me/201094393622" target="_blank" rel="noopener">لو واقف معاك حاجة كلّم الأدمن</a>
+    </div>
+  </div>
+
+  <!-- ========== وضع الصيانة: بيقفل الموقع على الطلاب والأدمن بيفضل يدخل ========== -->
+  <div class="gate" id="maintGate" role="dialog" aria-modal="true" aria-labelledby="maintTitle" hidden>
+    <div class="gate__card">
+      <div class="gate__ic">🛠️</div>
+      <h2 id="maintTitle">الموقع تحت الصيانة</h2>
+      <p id="maintMsg">بنحدّث الموقع، هنرجع قريب.</p>
+      <button class="gate__admin" id="maintAdmin" type="button">دخول الأدمن</button>
     </div>
   </div>
 
@@ -1834,13 +1895,41 @@
       else if (!document.querySelector('.panel.is-open') && !modal.classList.contains('is-open')) document.body.style.overflow = '';
     }
 
+    /* ---- إعلان مثبّت + وضع الصيانة (settings/site) ---- */
+    let siteCfg = {}, maintBypass = false;
+    const siteRef = doc(db, 'settings', 'site');
+    function renderSite() {
+      const a = siteCfg.announce || {};
+      const seen = (() => { try { return sessionStorage.getItem('annc_x'); } catch (e) { return null; } })();
+      const showA = !!(a.on && a.text) && seen !== String(a.at || 0);
+      document.getElementById('annc').hidden = !showA;
+      document.getElementById('anncText').textContent = a.text || '';
+      updateMaint();
+      if (curTab === 'announce') fillSiteTab();
+    }
+    function updateMaint() {
+      const m = siteCfg.maint || {};
+      const show = !!m.on && !currentRole && !maintBypass;
+      document.getElementById('maintGate').hidden = !show;
+      document.getElementById('maintMsg').textContent = m.msg || 'بنحدّث الموقع، هنرجع قريب.';
+      if (show) document.body.style.overflow = 'hidden';
+      else if (!document.querySelector('.panel.is-open') && !modal.classList.contains('is-open') && joinGate.hidden) document.body.style.overflow = '';
+    }
+    document.getElementById('anncX').addEventListener('click', () => {
+      try { sessionStorage.setItem('annc_x', String((siteCfg.announce || {}).at || 0)); } catch (e) {}
+      document.getElementById('annc').hidden = true;
+    });
+    document.getElementById('maintAdmin').addEventListener('click', () => { maintBypass = true; updateMaint(); openLogin('admin'); });
+    onSnapshot(siteRef, snap => { siteCfg = snap.data() || {}; renderSite(); }, () => {});
+
     function closeLogin() {
       if (waiting) { waiting = false; signOut(auth); }          // قفل وهو مستني الموافقة
       if (pendingUser) { signOut(auth); pendingUser = null; }   // قفل قبل كتابة الاسم
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
-      updateGate();
+      if (!currentRole) maintBypass = false;
+      updateGate(); updateMaint();
     }
 
     /* ---- اختيار الصف قبل جوجل ---- */
@@ -2116,15 +2205,30 @@
     /* تغيير / مسح صورة الطالب (بالضغط على صورته أو الحرف في الأعلى) */
     let avMenu = null;
     const closeAvMenu = () => { if (avMenu) avMenu.remove(); avMenu = null; };
+    async function copyText(text) {
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) {
+        const t = document.createElement('textarea');
+        t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t);
+        t.select(); try { document.execCommand('copy'); } catch (e2) {} t.remove();
+      }
+      toast('اتنسخ الكود: ' + text);
+    }
+    document.getElementById('stuCodeCopy').addEventListener('click', () => {
+      const c = document.getElementById('stuCode').textContent;
+      if (c) copyText(c);
+    });
+
     function openAvMenu() {
       if (avMenu) return closeAvMenu();
       const hasPhoto = !meAvatar.hidden;
       avMenu = document.createElement('div');
       avMenu.style.cssText = 'position:fixed;top:64px;inset-inline-start:12px;z-index:9999;display:grid;gap:8px;padding:10px;background:var(--bg);color:var(--txt);border:3px solid var(--txt);border-radius:14px';
-      avMenu.innerHTML = (currentRole ? '' : '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>') + (hasPhoto && !currentRole ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '') + '<button class="tool" data-a="logout">🚪 تسجيل خروج</button>' + (currentRole ? '' : '<button class="tool danger" data-a="delacc">⚠️ حذف الحساب</button>');
+      avMenu.innerHTML = (currentRole || !myCode ? '' : '<div class="codebox" style="justify-content:space-between"><b style="direction:rtl">' + esc(myName || 'طالب') + '</b><code>' + esc(myCode) + '</code><button type="button" class="tool copybtn" data-a="copycode">نسخ</button></div>') + (currentRole ? '' : '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>') + (hasPhoto && !currentRole ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '') + '<button class="tool" data-a="logout">🚪 تسجيل خروج</button>' + (currentRole ? '' : '<button class="tool danger" data-a="delacc">⚠️ حذف الحساب</button>');
       avMenu.addEventListener('click', async e => {
         const a = e.target.closest('button')?.dataset.a;
         if (!a) return;
+        if (a === 'copycode') { copyText(myCode); return; }
         const ref = doc(db, 'users', auth.currentUser.uid);
         closeAvMenu();
         if (a === 'logout') { signOut(auth); return; }
@@ -2184,7 +2288,7 @@
     }
     [meAvatar, meLetter].forEach(el => el.addEventListener('click', e => { e.stopPropagation(); openAvMenu(); }));
     document.addEventListener('click', e => { if (avMenu && !avMenu.contains(e.target)) closeAvMenu(); });
-    let myBadge = '';
+    let myBadge = '', myCode = '';
     const meCrown = document.getElementById('meCrown');
     let myAccess = null;   // الصفوف والمواد المسموحة له (null = كلها)
     let inbox = [];        // تنبيهات ورسايل الإدارة
@@ -2227,6 +2331,7 @@
         meLetter.hidden = !!ph;
         meLetter.textContent = initial(d.name);
         myBadge = BADGES.includes(d.badge) ? d.badge : '';
+        myCode = d.code || '';
         meCrown.hidden = myBadge !== '👑';
         myAccess = d.access || null;
         if (JSON.stringify(myAccess) !== before) refreshAccess();
@@ -2282,10 +2387,11 @@
       currentRole = user ? await getRole(user) : null;
       stopStudentWatch();
       myName = null; myAccess = null; inbox = [];
-      meAvatar.hidden = true; meLetter.hidden = true; meCrown.hidden = true; myBadge = ''; closeAvMenu();
+      meAvatar.hidden = true; meLetter.hidden = true; meCrown.hidden = true; myBadge = ''; myCode = ''; closeAvMenu();
       document.getElementById('devSection').hidden = !!currentRole;
       myNeedGroup = false;
-      updateGate();
+      if (currentRole) maintBypass = false;
+      updateGate(); updateMaint();
       if (!user || currentRole) {      // ممكن تتنادى بدري قبل ما الشاشة تخلص تحميل
         try { closeDevPanel(); } catch (e) {}
         try { closeRatePanel(); } catch (e) {}
@@ -2365,6 +2471,7 @@
       guests:   ['ضيف أدمن', 'tabGuests'],
       communities: ['المجتمعات', 'tabCommunities'],
       reports:  ['البلاغات', 'tabReports'],
+      announce: ['إعلان وصيانة', 'tabAnnounce'],
       stats:    ['الإحصائيات', 'tabStats'],
       content:  ['المحتوى', 'tabContent']
     };
@@ -2401,13 +2508,14 @@
         panelTabs = [...(anyGrant('community') ? ['communities'] : []),
                      ...(anyGrant('content') ? ['content'] : [])];
         if (!panelTabs.length) return toast('مفيش صلاحيات متاحة لحسابك.');
-      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'ratings', 'reports', 'stats', 'admins', 'guests', 'log', 'communities', 'content'] : ['communities', 'stats', 'content'];
+      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'ratings', 'reports', 'announce', 'stats', 'admins', 'guests', 'log', 'communities', 'content'] : ['communities', 'stats', 'content'];
       const allowed = panelTabs;
 
       if (currentRole === 'owner') {
         unsubs.push(onSnapshot(collection(db, 'users'), snap => {
           students = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderStudents();
+          ensureCodes();
           renderDevNotes();
           renderGuests();
         }, panelError));
@@ -2466,18 +2574,53 @@
       if (key === 'devnotes') { renderDevNotes(); markDevSeen(); }
       if (key === 'reports') renderReports();
       if (key === 'ratings') renderRatings();
+      if (key === 'announce') fillSiteTab();
+      document.getElementById('exportBox').hidden = !isOwner();
       if (key === 'stats') loadStats(statDays);
     }
 
     /* ---- الطلاب ---- */
     const gradeTag = s => Number.isInteger(s.grade) && GRADES[s.grade] ? ' • ' + GRADES[s.grade].name : '';
 
+    /* ---- كود البحث لكل طالب: 6 حروف وأرقام (من غير الحروف المتشابهة) ---- */
+    const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    function newCode(taken) {
+      for (;;) {
+        const a = new Uint32Array(6); crypto.getRandomValues(a);
+        const c = Array.from(a, n => CODE_CHARS[n % CODE_CHARS.length]).join('');
+        if (/[A-Z]/.test(c) && /[2-9]/.test(c) && !taken.has(c)) { taken.add(c); return c; }
+      }
+    }
+    let codesBusy = false;
+    async function ensureCodes() {                         // أي طالب من غير كود (أو كوده مكرر) بياخد كود جديد
+      if (codesBusy || !isOwner()) return;
+      const taken = new Set(), need = [];
+      students.forEach(st => { if (st.code && !taken.has(st.code)) taken.add(st.code); else need.push(st); });
+      if (!need.length) return;
+      codesBusy = true;
+      try {
+        for (let i = 0; i < need.length; i += 400) {
+          const batch = writeBatch(db);
+          need.slice(i, i + 400).forEach(st => batch.update(doc(db, 'users', st.id), { code: newCode(taken) }));
+          await batch.commit();
+        }
+      } catch (err) { console.error(err); }
+      finally { codesBusy = false; }
+    }
+
+    let stuFilter = 'all', shownStudents = [];
     function renderStudents() {
       const q = document.getElementById('search').value.trim().toLowerCase();
-      const match = s => !q || (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q);
+      const match = s => !q || (s.name || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q) || (s.code || '').toLowerCase().includes(q.replace(/[\s-]/g, ''));
       const byNew = (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
       const waitingList = students.filter(s => s.approved === false && match(s)).sort(byNew);
-      const list = students.filter(s => s.approved !== false && match(s)).sort(byNew);
+      const fOk = s => stuFilter === 'all' ? true : stuFilter === 'blocked' ? !!s.blocked : stuFilter === 'group' ? !!s.needGroup : s.grade === Number(stuFilter.slice(1));
+      const list = students.filter(s => s.approved !== false && match(s) && fOk(s)).sort(byNew);
+      shownStudents = list;
+      document.getElementById('stuFilter').innerHTML = [['all', 'الكل'], ...GRADES.map((g, i) => ['g' + i, g.name]), ['blocked', 'متوقفين'], ['group', 'عليهم إجبار جروب']]
+        .map(([k, n]) => `<button type="button" class="cb" data-f="${k}" aria-pressed="${stuFilter === k}">${n}</button>`).join('');
+      document.getElementById('bulkBox').hidden = !list.length;
+      document.getElementById('bulkCount').textContent = 'هيتطبق على ' + list.length + ' طالب معروضين دلوقتي (غيّر الفلتر أو البحث لتحديدهم).';
 
       document.getElementById('stTotal').textContent = students.filter(s => s.approved !== false).length;
       document.getElementById('stBlocked').textContent = students.filter(s => s.approved !== false && s.blocked).length;
@@ -2486,7 +2629,7 @@
         <h3 style="margin:6px 0 10px">طلبات التسجيل <span class="pill">${waitingList.length}</span></h3>
         ${waitingList.map(s => `
           <div class="row" data-id="${esc(s.id)}">
-            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+            <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span>${s.code ? `<small class="stucode">كود: ${esc(s.code)}</small>` : ''}</div>
             <span class="chip ${s.rejected ? 'chip--off' : ''}">${s.rejected ? 'مرفوض' : 'مستني'}</span>
             <div class="row__acts">
               <button data-act="approve">قبول</button>
@@ -2497,13 +2640,55 @@
 
       studentList.innerHTML = list.length ? list.map((s, i) => `
         <div class="row" data-id="${esc(s.id)}" style="--i:${Math.min(i, 8)}">
-          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span></div>
+          <div class="row__info"><b>${avatarImg(s.photo, 'avatar--sm', s.name, s.badge)}${esc(s.name)}${nameBadge(s.badge)}</b><span>${esc(s.email)}${esc(gradeTag(s))}</span>${s.code ? `<small class="stucode">كود: ${esc(s.code)}</small>` : ''}</div>
           <span class="chip ${s.blocked ? 'chip--off' : ''}">${s.blocked ? 'متوقف' : 'نشط'}</span>
           <div class="row__acts"><button data-act="open">تحكم كامل</button></div>
         </div>`).join('') : '<p class="empty">مفيش طلاب لسه.</p>';
 
       if (stuId) renderStudentSheet();   // لو شاشة الطالب مفتوحة حدّثها
     }
+
+    document.getElementById('stuFilter').addEventListener('click', e => {
+      const b = e.target.closest('button[data-f]');
+      if (!b) return;
+      stuFilter = b.dataset.f; renderStudents();
+    });
+
+    /* ---- إجراءات جماعية على الطلاب المعروضين ---- */
+    async function bulkRun(label, apply) {
+      const list = shownStudents.slice();
+      if (!list.length) return;
+      if (!confirm(label + ' على ' + list.length + ' طالب؟')) return;
+      try {
+        for (let i = 0; i < list.length; i += 150) {
+          const batch = writeBatch(db);
+          list.slice(i, i + 150).forEach(st => apply(batch, st));
+          await batch.commit();
+        }
+        toast('تم على ' + list.length + ' طالب ✓');
+      } catch (err) { dbError(err); }
+    }
+    const bulkLog = (batch, st, action, detail = '') => {
+      const u = auth.currentUser;
+      batch.set(doc(collection(db, 'adminLog')), {
+        email: (u?.email || '').toLowerCase(), name: u?.displayName || u?.email || '', role: currentRole || '',
+        studentId: st.id, action, detail, at: serverTimestamp()
+      });
+    };
+    document.getElementById('bulkGroupOn').addEventListener('click', () => bulkRun('تفعيل إجبار الجروب', (b, st) => {
+      b.update(doc(db, 'users', st.id), { needGroup: true }); bulkLog(b, st, 'تفعيل إجبار الجروب (جماعي)');
+    }));
+    document.getElementById('bulkGroupOff').addEventListener('click', () => bulkRun('إلغاء إجبار الجروب', (b, st) => {
+      b.update(doc(db, 'users', st.id), { needGroup: false }); bulkLog(b, st, 'إلغاء إجبار الجروب (جماعي)');
+    }));
+    document.getElementById('bulkAlert').addEventListener('click', () => {
+      const text = (prompt('اكتب نص التنبيه اللي هيوصل للمعروضين:') || '').trim().slice(0, 500);
+      if (!text) return;
+      bulkRun('إرسال التنبيه', (b, st) => {
+        b.set(doc(collection(db, 'users', st.id, 'inbox')), { type: 'alert', text, from: 'الإدارة', createdAt: serverTimestamp(), read: false });
+        bulkLog(b, st, 'إرسال تنبيه (جماعي)', text.slice(0, 80));
+      });
+    });
 
     studentList.addEventListener('click', e => {
       const btn = e.target.closest('button[data-act="open"]');
@@ -2519,10 +2704,10 @@
       try {
         if (btn.dataset.act === 'approve') {
           await updateDoc(doc(db, 'users', id), { approved: true, rejected: deleteField() });
-          toast('اتقبل الطالب ✓');
+          logStu(id, 'قبول الطالب'); toast('اتقبل الطالب ✓');
         } else {
           await updateDoc(doc(db, 'users', id), { rejected: true });
-          toast('اترفض الطلب');
+          logStu(id, 'رفض الطلب'); toast('اترفض الطلب');
         }
       } catch (err) { btn.disabled = false; dbError(err); }
     });
@@ -2639,6 +2824,99 @@
         }
       } catch (err) { dbError(err); }
     });
+
+    /* ---- تاب الإعلان والصيانة (للمدير الرئيسي) ---- */
+    function fillSiteTab() {
+      const a = siteCfg.announce || {}, m = siteCfg.maint || {};
+      const ai = document.getElementById('anncInput'), mi = document.getElementById('maintInput');
+      if (document.activeElement !== ai) ai.value = a.text || '';
+      if (document.activeElement !== mi) mi.value = m.msg || '';
+      document.getElementById('anncState').textContent = a.on && a.text ? 'الإعلان شغّال' : 'مفيش إعلان';
+      document.getElementById('maintState').textContent = m.on ? 'الصيانة شغّالة' : 'الموقع شغّال عادي';
+      document.getElementById('maintBtn').textContent = m.on ? 'إيقاف الصيانة' : 'تشغيل الصيانة';
+      document.getElementById('anncOff').hidden = !(a.on && a.text);
+    }
+    document.getElementById('anncSave').addEventListener('click', async () => {
+      const text = document.getElementById('anncInput').value.trim();
+      if (!text) return toast('اكتب نص الإعلان الأول.');
+      try { await setDoc(siteRef, { announce: { text, on: true, at: Date.now() } }, { merge: true }); toast('اتنشر الإعلان'); }
+      catch (err) { dbError(err); }
+    });
+    document.getElementById('anncOff').addEventListener('click', async () => {
+      try { await setDoc(siteRef, { announce: { on: false, text: (siteCfg.announce || {}).text || '', at: Date.now() } }, { merge: true }); toast('اتشال الإعلان'); }
+      catch (err) { dbError(err); }
+    });
+    document.getElementById('maintBtn').addEventListener('click', async () => {
+      const on = !(siteCfg.maint || {}).on;
+      if (on && !confirm('الموقع هيتقفل على كل الطلاب لحد ما توقف الصيانة. متأكد؟')) return;
+      const msg = document.getElementById('maintInput').value.trim();
+      try { await setDoc(siteRef, { maint: { on, msg } }, { merge: true }); toast(on ? 'الصيانة اشتغلت' : 'الصيانة وقفت'); }
+      catch (err) { dbError(err); }
+    });
+
+    /* ---- تصدير النتايج + نسخة احتياطية (للمدير الرئيسي) ---- */
+    function downloadFile(name, text, type) {
+      const url = URL.createObjectURL(new Blob([text], { type }));
+      const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+    const stamp = () => new Date().toISOString().slice(0, 10);
+    const csvCell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    document.getElementById('exportResults').addEventListener('click', async () => {
+      if (!isOwner()) return;
+      sheetMsg('exportMsg', 'بيحمّل النتايج...', true);
+      try {
+        const snap = await getDocs(collection(db, 'results'));
+        const rows = snap.docs.map(d => d.data()).sort((x, y) => (y.at?.seconds || 0) - (x.at?.seconds || 0));
+        const head = ['الاسم', 'الإيميل', 'الصف', 'الدرس', 'الدرجة', 'من', 'المحاولات', 'التاريخ'];
+        const lines = [head, ...rows.map(r => [r.name, r.email, GRADES[r.grade]?.name || r.grade, r.title, r.score, r.total, r.attempts || 1,
+          r.at?.toDate ? r.at.toDate().toLocaleString('ar-EG') : ''])];
+        downloadFile('results-' + stamp() + '.csv', '\ufeff' + lines.map(l => l.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+        sheetMsg('exportMsg', 'اتنزّل ملف فيه ' + rows.length + ' نتيجة.', true);
+      } catch (err) { sheetMsg('exportMsg', authMessage(err)); }
+    });
+    document.getElementById('exportBackup').addEventListener('click', async () => {
+      if (!isOwner()) return;
+      sheetMsg('exportMsg', 'بيجهّز النسخة...', true);
+      try {
+        const [u, c, r] = await Promise.all(['users', 'content', 'results'].map(n => getDocs(collection(db, n))));
+        const clean = (d, drop) => { const o = { id: d.id, ...d.data() }; drop.forEach(k => delete o[k]); return JSON.parse(JSON.stringify(o, (k, v) => v?.toDate ? v.toDate().toISOString() : v)); };
+        const data = {
+          exportedAt: new Date().toISOString(),
+          note: 'الصور وملفات PDF الكبيرة مش داخلة في النسخة.',
+          users: u.docs.map(d => clean(d, ['photo'])),
+          content: c.docs.map(d => clean(d, ['images', 'pdf'])),
+          results: r.docs.map(d => clean(d, []))
+        };
+        downloadFile('backup-' + stamp() + '.json', JSON.stringify(data, null, 1), 'application/json');
+        sheetMsg('exportMsg', 'اتنزّلت النسخة: ' + data.users.length + ' طالب، ' + data.content.length + ' درس، ' + data.results.length + ' نتيجة.', true);
+      } catch (err) { sheetMsg('exportMsg', authMessage(err)); }
+    });
+
+    /* ---- سجل كل طالب: أي إجراء المدير بيعمله عليه بيتسجل (في adminLog بحقل studentId) ---- */
+    function logStu(uid, action, detail = '') {
+      const u = auth.currentUser;
+      if (!u || !uid) return;
+      addDoc(collection(db, 'adminLog'), {
+        email: (u.email || '').toLowerCase(), name: u.displayName || u.email || '', role: currentRole || '',
+        studentId: uid, action, detail: String(detail).slice(0, 200), at: serverTimestamp()
+      }).catch(() => {});
+    }
+    let stuLogUnsub = null;
+    function stopStuLog() { if (stuLogUnsub) stuLogUnsub(); stuLogUnsub = null; }
+    function watchStuLog(id) {
+      stopStuLog();
+      const box = document.getElementById('stuLog');
+      box.innerHTML = '<p class="note-s">بيحمّل...</p>';
+      stuLogUnsub = onSnapshot(query(collection(db, 'adminLog'), where('studentId', '==', id), limit(200)), snap => {
+        const docs = snap.docs.map(d => d.data()).sort((x, y) => (y.at?.seconds ?? 9e12) - (x.at?.seconds ?? 9e12)).slice(0, 30);
+        box.innerHTML = docs.length ? docs.map(a => {
+          const t = a.at?.toDate?.();
+          return `<div class="row"><div class="row__info"><b>${esc(a.action)}</b>${a.detail ? `<small>${esc(a.detail)}</small>` : ''}
+            <small>${t ? t.toLocaleString('ar-EG') : 'دلوقتي'}</small></div></div>`;
+        }).join('') : '<p class="note-s">لسه مفيش إجراءات على الطالب ده.</p>';
+      }, () => { box.innerHTML = '<p class="note-s">مقدرتش أحمّل السجل.</p>'; });
+    }
 
     /* ---- سجل الأدمن: أي حاجة بيعملها أدمن أو ضيف أدمن بتتسجل وتظهر للمدير الرئيسي ---- */
     function logAct(action, detail = '') {
@@ -3489,6 +3767,7 @@
       document.getElementById('sendText').value = '';
       sheetMsg('sendMsg', ''); sheetMsg('accMsg', ''); sheetMsg('stuAdminMsg', '');
       fillStuAdmin();
+      watchStuLog(id);
       stuPanel.classList.add('is-open');
       stuPanel.setAttribute('aria-hidden', 'false');
       renderStudentSheet();
@@ -3502,7 +3781,7 @@
     }
 
     function closeStudent() {
-      stuId = null;
+      stuId = null; stopStuLog();
       stuPanel.classList.remove('is-open');
       stuPanel.setAttribute('aria-hidden', 'true');
     }
@@ -3516,6 +3795,8 @@
         `<button type="button" class="cb cb--badge" data-b="${b}" aria-pressed="${s.badge === b}">${b}</button>`).join('');
       document.getElementById('badgeClear').hidden = !s.badge;
       document.getElementById('stuMail').textContent = s.email + gradeTag(s);
+      document.getElementById('stuCodeBox').hidden = !s.code;
+      document.getElementById('stuCode').textContent = s.code || '';
       const sp = safePhoto(s.photo), stuPhoto = document.getElementById('stuPhoto');
       stuPhoto.hidden = !sp;
       if (sp) stuPhoto.src = sp;
@@ -3556,6 +3837,7 @@
           type: sendType, text, from: 'الإدارة', createdAt: serverTimestamp(), read: false
         });
         document.getElementById('sendText').value = '';
+        logStu(stuId, sendType === 'alert' ? 'إرسال تنبيه' : 'إرسال رسالة', text.slice(0, 80));
         sheetMsg('sendMsg', sendType === 'alert' ? 'التنبيه وصله.' : 'الرسالة اتبعتت.', true);
       } catch (err) { sheetMsg('sendMsg', authMessage(err)); }
     });
@@ -3566,7 +3848,7 @@
       if (!s) return;
       try {
         await updateDoc(doc(db, 'users', s.id), { blocked: !s.blocked });
-        toast(s.blocked ? 'اتفك الحظر' : 'الحساب اتوقف');
+        logStu(s.id, s.blocked ? 'فك حظر الحساب' : 'حظر الحساب'); toast(s.blocked ? 'اتفك الحظر' : 'الحساب اتوقف');
       } catch (err) { dbError(err); }
     });
 
@@ -3576,7 +3858,7 @@
       if (!s) return;
       try {
         await updateDoc(doc(db, 'users', s.id), { needGroup: !s.needGroup });
-        toast(s.needGroup ? 'اتلغى إجبار الجروب' : 'اتفعّل إجبار الجروب على الطالب');
+        logStu(s.id, s.needGroup ? 'إلغاء إجبار الجروب' : 'تفعيل إجبار الجروب'); toast(s.needGroup ? 'اتلغى إجبار الجروب' : 'اتفعّل إجبار الجروب على الطالب');
       } catch (err) { dbError(err); }
     });
 
@@ -3625,12 +3907,12 @@
     document.getElementById('badgeChips').addEventListener('click', async e => {
       const b = e.target.closest('button[data-b]')?.dataset.b;
       if (!b || !stuId) return;
-      try { await updateDoc(doc(db, 'users', stuId), { badge: b }); sheetMsg('badgeMsg', 'اتحطت الشارة ' + b, true); }
+      try { await updateDoc(doc(db, 'users', stuId), { badge: b }); logStu(stuId, 'وضع شارة', b); sheetMsg('badgeMsg', 'اتحطت الشارة ' + b, true); }
       catch (err) { dbError(err); }
     });
     document.getElementById('badgeClear').addEventListener('click', async () => {
       if (!stuId) return;
-      try { await updateDoc(doc(db, 'users', stuId), { badge: deleteField() }); sheetMsg('badgeMsg', 'اتشالت الشارة.', true); }
+      try { await updateDoc(doc(db, 'users', stuId), { badge: deleteField() }); logStu(stuId, 'شيل الشارة'); sheetMsg('badgeMsg', 'اتشالت الشارة.', true); }
       catch (err) { dbError(err); }
     });
 
