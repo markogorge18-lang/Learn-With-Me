@@ -338,7 +338,7 @@ const storyArt = s => s.img ? `<img src="${esc(s.img)}" alt="" style="width:100%
 
 /* ---------- state ---------- */
 let app, auth, db;
-let uid = null, me = null, isAdmin = false, adminTry = false;
+let uid = null, me = null, isAdmin = false, isSuper = false, adminTry = false;
 let chats = [], chanList = [], stories = [];
 const ucache = new Map(), pend = new Set();
 let unsubs = [], hbTimer = null, firstChats = true;
@@ -434,19 +434,25 @@ async function onAuth(u) {
 function teardown() {
   unsubs.forEach(f => { try { f(); } catch (e) {} }); unsubs = [];
   clearInterval(hbTimer); closeOvQuiet();
-  chats = []; chanList = []; stories = []; firstChats = true; isAdmin = false; joinedSys = false; cmpRO = null; SUPPORT.forEach(x => { x.uid = null; });
+  chats = []; chanList = []; stories = []; firstChats = true; isAdmin = false; isSuper = false; joinedSys = false; cmpRO = null; SUPPORT.forEach(x => { x.uid = null; });
   $('#app').hidden = true;
 }
 function startApp() {
   $('#auth').hidden = true; $('#app').hidden = false;
   $('#empty').innerHTML = `${logo(120)}<h2 style="color:var(--text);letter-spacing:.14em">DAMA</h2><p>اختر محادثة لبدء التواصل<br><small>المحادثات تخضع لإشراف إدارة التطبيق لحماية الطلاب</small></p>`;
-  getDoc(doc(db, 'admins', uid)).then(s => { isAdmin = s.exists(); renderTab(); if (isAdmin) ensureSysGroups(false); if (curKind === 'chat') { syncComposer(); drawMsgs(); }
+  getDoc(doc(db, 'admins', uid)).then(s => { isAdmin = s.exists(); isSuper = isAdmin && s.data().super === true; renderTab(); if (isAdmin) ensureSysGroups(false); if (curKind === 'chat') { syncComposer(); drawMsgs(); }
     if (adminTry) { adminTry = false; if (isAdmin) setTimeout(openAdmin, 900); else { toast('الحساب ده مش أدمن'); signOut(auth).catch(() => {}); } } }).catch(() => { adminTry = false; });
   unsubs.push(onSnapshot(doc(db, 'users', uid), s => { if (s.exists()) { me = {id: uid, ...s.data()}; ucache.set(uid, me); if (me.banned) bannedScreen(); } }, console.error));
   unsubs.push(onSnapshot(query(collection(db, 'chats'), where('members', 'array-contains', uid)), onChats, e => toast('خطأ في تحميل المحادثات: ' + e.code)));
   unsubs.push(onSnapshot(query(collection(db, 'channels'), limit(100)), s => { chanList = s.docs.map(d => ({id: d.id, ...d.data()})); if (tab === 'channels' || tab === 'chats') renderTab(); }, console.error));
   unsubs.push(onSnapshot(query(collection(db, 'stories'), where('exp', '>', Date.now()), limit(100)), s => { stories = s.docs.map(d => ({id: d.id, ...d.data({serverTimestamps: 'estimate'})})).sort((a, b) => ms(a.ts) - ms(b.ts)); if (tab === 'status') renderTab(); }, console.error));
-  SUPPORT.forEach(sp => getDoc(doc(db, 'handles', sp.handle)).then(h => { if (h.exists()) { sp.uid = h.data().uid; fetchUser(sp.uid); if (tab === 'chats') renderTab(); } }).catch(() => {}));
+  const resolveSupport = () => SUPPORT.forEach(sp => { if (sp.uid) return; getDoc(doc(db, 'handles', sp.handle)).then(h => { if (h.exists()) { sp.uid = h.data().uid; fetchUser(sp.uid); if (tab === 'chats') renderTab(); } }).catch(() => {}); });
+  resolveSupport();
+  unsubs.push(onSnapshot(doc(db, 'config', 'app'), sn => {
+    const d = sn.exists() ? sn.data() : null;
+    if (d && Array.isArray(d.support)) { SUPPORT.length = 0; d.support.slice(0, 4).forEach(x => SUPPORT.push({handle: String(x.handle || '').toLowerCase(), name: x.name, title: x.title || ('كلم ' + x.name), sub: x.sub || '', uid: null})); resolveSupport(); }
+    if (tab === 'chats') renderTab();
+  }, () => {}));
   beat(); hbTimer = setInterval(beat, 50000);
   renderMain();
 }
@@ -1056,6 +1062,22 @@ async function wipeMessages(cid) {
   for (;;) { const q = await getDocs(query(collection(db, 'chats', cid, 'messages'), limit(400))); if (q.empty) break;
     const b = writeBatch(db); q.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
 }
+async function saveSupport() {
+  await setDoc(doc(db, 'config', 'app'), {support: SUPPORT.map(x => ({handle: x.handle, name: x.name, title: x.title, sub: x.sub}))}, {merge: true});
+}
+async function loadSuper() {
+  const box = $('#superbox'); if (!box || !isSuper) return;
+  let ads = [];
+  try { ads = (await getDocs(collection(db, 'admins'))).docs.map(d => ({id: d.id, ...d.data()})); } catch (e) {}
+  await Promise.all(ads.map(a => ucache.has(a.id) ? 0 : getDoc(doc(db, 'users', a.id)).then(x => { if (x.exists()) ucache.set(a.id, {id: a.id, ...x.data()}); }).catch(() => {})));
+  const b = $('#superbox'); if (!b) return;
+  b.innerHTML = `<div class="lbl" style="margin:12px 16px">المشرفين <span class="crown">♛</span> أنت المالك وأنت اللي بتحدد مين مشرف</div>`
+    + ads.map(a => { const u = ucache.get(a.id) || {name: 'مستخدم'}; return `<div class="urow">${av(u.name, colorOf(u.name), 38, false, u.photo)}<div class="n"><b>${esc(u.name)} ${a.super ? '<span class="crown">♛</span>' : ''}</b><small dir="ltr">@${esc(u.handle || '')}</small></div>${a.super || a.id === uid ? '' : `<button class="btn sm danger" data-a="rmadmin" data-id="${a.id}">إزالة</button>`}</div>`; }).join('')
+    + `<button class="btn out" data-a="addadmin" style="margin:8px 16px;width:calc(100% - 32px)">إضافة مشرف بإسم المستخدم</button>`
+    + `<div class="lbl" style="margin:12px 16px">الشاتات الثابتة (كلم داما / المستر)</div>`
+    + SUPPORT.map((x, i) => `<div class="urow"><div class="n"><b>${esc(x.title)}</b><small dir="ltr">@${esc(x.handle)}</small></div><button class="btn sm out" data-a="editsup" data-i="${i}">تعديل</button><button class="ib" data-a="delsup" data-i="${i}" style="color:var(--danger)" aria-label="حذف">${ic('trash')}</button></div>`).join('')
+    + (SUPPORT.length < 4 ? `<button class="btn out" data-a="editsup" data-i="-1" style="margin:8px 16px;width:calc(100% - 32px)">إضافة شات ثابت</button>` : '');
+}
 async function openAdmin() {
   if (!isAdmin) return; closeOvQuiet(); curKind = 'admin'; ovBack = null;
   ov(`<header class="bar"><button class="ib" data-a="close" aria-label="رجوع">${ic('back')}</button><div class="ttl"><b>لوحة المطور <span class="crown">♛</span></b><small>صلاحيات المشرف</small></div></header><div class="scroll" id="adm"><div class="empty-note">جارٍ التحميل...</div></div>`);
@@ -1070,10 +1092,12 @@ async function openAdmin() {
     $('#adm').innerHTML = `<div class="stat"><div><b>${u}</b><span>المستخدمون</span></div><div><b>${c}</b><span>القنوات</span></div><div><b>${st}</b><span>القصص</span></div><div><b>${chanList.filter(x => x.verified).length}</b><span>قنوات موثقة</span></div><div><b>${rc}</b><span>بلاغات</span></div></div>
       <button class="btn pri" data-a="allchats" style="margin:12px 16px;width:calc(100% - 32px)">عرض كل المحادثات والتحكم فيها</button>
       <button class="btn out" data-a="seedgroups" style="margin:0 16px 12px;width:calc(100% - 32px)">إنشاء / إصلاح المجموعات الأربع</button>
+      ${isSuper ? '<div id="superbox"></div>' : ''}
       <div class="lbl" style="margin:12px 16px">البلاغات</div>${rps.docs.map(d => { const r = d.data(); const body = r.t === 'text' ? esc(r.x) : r.t === 'img' && r.x && r.x.startsWith('data:image') ? `<img src="${esc(r.x)}" style="max-width:160px;border-radius:8px;display:block">` : '[' + esc(r.t) + ']'; return `<div class="urow" style="flex-wrap:wrap"><div class="n" style="flex-basis:100%"><b>${esc(r.fromName || '')}</b><small>أبلغ: ${esc(r.byName || '')}</small><div style="margin-top:6px">${body}</div></div><button class="btn sm danger" data-a="rdel" data-id="${d.id}">حذف الرسالة</button><button class="btn sm danger" data-a="rban" data-id="${d.id}" data-u="${esc(r.from)}">حظر المرسل</button><button class="btn sm out" data-a="rdis" data-id="${d.id}">تجاهل</button></div>`; }).join('') || '<div class="empty-note">لا توجد بلاغات</div>'}
       <div class="lbl" style="margin:12px 16px">القصص النشطة</div>${sts.docs.map(d => { const x = d.data(); return `<div class="urow"><div class="n"><b>${esc(x.name)}</b><small>${esc((x.text || '').slice(0, 40))}</small></div><button class="ib" data-a="admstory" data-id="${d.id}" style="color:var(--danger)" aria-label="حذف">${ic('trash')}</button></div>`; }).join('') || '<div class="empty-note">لا توجد قصص</div>'}
       <div class="lbl" style="margin:12px 16px">القنوات</div>${chanList.map(ch => `<div class="urow"><div class="n"><b>${esc(ch.name)}</b><small>${(ch.followers || []).length} مشترك</small></div><button class="btn sm ${ch.verified ? 'out' : 'pri'}" data-a="verify" data-id="${ch.id}">${ch.verified ? 'إلغاء التوثيق' : 'توثيق'}</button><button class="ib" data-a="delchan" data-id="${ch.id}" data-adm="1" style="color:var(--danger)" aria-label="حذف">${ic('trash')}</button></div>`).join('') || '<div class="empty-note">لا توجد قنوات</div>'}
-      <div class="lbl" style="margin:12px 16px">آخر المستخدمين</div>${us.docs.map(d => { const x = d.data(); return `<div class="urow">${av(x.name, colorOf(x.name), 38, false, x.photo)}<div class="n"><b>${esc(x.name)}</b><small dir="ltr">@${esc(x.handle)}</small></div>${d.id === uid ? '' : `<button class="btn sm ${x.banned ? 'pri' : 'danger'}" data-a="ban" data-id="${d.id}" data-b="${x.banned ? 1 : 0}">${x.banned ? 'إلغاء الحظر' : 'حظر'}</button><button class="btn sm out" data-a="mon" data-id="${d.id}" data-n="${esc(x.name)}" style="margin-inline-start:6px">المحادثات</button><button class="btn sm danger" data-a="deluser" data-id="${d.id}" data-h="${esc(x.handle)}" style="margin-inline-start:6px">حذف</button>`}</div>`; }).join('')}`;
+      <div class="lbl" style="margin:12px 16px">آخر المستخدمين</div>${us.docs.map(d => { const x = d.data(); return `<div class="urow">${av(x.name, colorOf(x.name), 38, false, x.photo)}<div class="n"><b>${esc(x.name)}</b><small dir="ltr">@${esc(x.handle)}</small></div>${d.id === uid ? '' : `<button class="btn sm ${x.banned ? 'pri' : 'danger'}" data-a="ban" data-id="${d.id}" data-b="${x.banned ? 1 : 0}">${x.banned ? 'إلغاء الحظر' : 'حظر'}</button><button class="btn sm out" data-a="mon" data-id="${d.id}" data-n="${esc(x.name)}" style="margin-inline-start:6px">المحادثات</button>${isSuper ? `<button class="btn sm danger" data-a="deluser" data-id="${d.id}" data-h="${esc(x.handle)}" style="margin-inline-start:6px">حذف</button>` : ''}`}</div>`; }).join('')}`;
+    if (isSuper) loadSuper();
   } catch (e) { $('#adm').innerHTML = `<div class="empty-note">تعذر التحميل: ${esc(e.code || e.message)}</div>`; }
 }
 
@@ -1184,6 +1208,20 @@ document.addEventListener('click', async e => {
       if (notifOn && 'Notification' in window && Notification.permission === 'default') await Notification.requestPermission(); renderTab(); break;
     case 'admin': openAdmin(); break;
     case 'seedgroups': await ensureSysGroups(true); break;
+    case 'addadmin': if (!isSuper) break; modal('إضافة مشرف', {ph: 'اسم المستخدم (بدون @)', ok: 'إضافة'}, async h => {
+      h = h.replace(/^@/, '').toLowerCase(); if (!h) { $('#me').textContent = 'اكتب اسم المستخدم'; return false; }
+      const hs = await getDoc(doc(db, 'handles', h)); if (!hs.exists()) { $('#me').textContent = 'مفيش مستخدم بالاسم ده'; return false; }
+      await setDoc(doc(db, 'admins', hs.data().uid), {super: false, by: uid, ts: serverTimestamp()}); toast('تمت إضافة المشرف'); loadSuper(); }); break;
+    case 'rmadmin': if (!isSuper) break; confirmBox('إزالة مشرف', 'هيفقد كل صلاحيات الإشراف.', 'إزالة', async () => { try { await deleteDoc(doc(db, 'admins', id)); toast('تمت الإزالة'); } catch (x) { toast('تعذرت الإزالة'); } loadSuper(); }); break;
+    case 'editsup': { if (!isSuper) break; const i = +t.dataset.i, old = SUPPORT[i] || {handle: '', name: ''};
+      modal('اسم المستخدم للشخص', {val: old.handle, ph: 'مثال: dama', ok: 'التالي'}, async h => {
+        h = h.replace(/^@/, '').toLowerCase(); const hs = h ? await getDoc(doc(db, 'handles', h)) : null; if (!hs || !hs.exists()) { $('#me').textContent = 'مفيش مستخدم بالاسم ده'; return false; }
+        setTimeout(() => modal('الاسم اللي هيظهر للطلاب', {val: old.name, ok: 'حفظ'}, async n => {
+          if (n.length < 2) { $('#me').textContent = 'اكتب اسماً'; return false; }
+          const item = {handle: h, name: n, title: 'كلم ' + n, sub: old.sub || '', uid: null};
+          if (i >= 0) SUPPORT[i] = item; else SUPPORT.push(item);
+          await saveSupport(); toast('تم الحفظ'); loadSuper(); }), 60); }); break; }
+    case 'delsup': if (!isSuper) break; SUPPORT.splice(+t.dataset.i, 1); await saveSupport(); toast('تم الحذف'); loadSuper(); break;
     case 'togro': { const c = chats.find(x => x.id === id); if (!c || !isAdmin) break; await updateDoc(doc(db, 'chats', id), {readOnly: !c.readOnly}); toast(c.readOnly ? 'الأعضاء يقدروا يكتبوا دلوقتي' : 'الكتابة للأدمن بس دلوقتي'); await sleep(250); openInfo(id); break; }
     case 'mrep': { const m = msgs.find(x => x.id === id); if (!m) break;
       confirmBox('إبلاغ عن رسالة', 'هتتبعت الرسالة دي للمشرف للمراجعة.', 'إبلاغ', async () => {
