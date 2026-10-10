@@ -1256,9 +1256,14 @@
       <button class="back" data-back="home">→ رجوع</button>
       <h2 id="subjGrade"></h2>
     </div>
+    <h3 class="sec-title" style="margin-top:6px">المحتوى</h3>
     <p class="page__sub">اختار المادة</p>
     <button class="tool" id="pushBtn" type="button" hidden style="width:100%;margin-bottom:12px">🔔 نبّهني لما ينزل درس جديد</button>
     <div id="subjectList"></div>
+
+    <h3 class="sec-title">واتساب</h3>
+    <p class="page__sub">كلّم المستر أو داما، وادخل مجتمع المادة على واتساب.</p>
+    <div id="waList"></div>
 
     <h3 class="sec-title">قسم المساعدين</h3>
     <p class="page__sub">محتاج مساعدة؟ كلّم مساعد على واتساب مباشرة.</p>
@@ -1299,12 +1304,6 @@
       <h2 id="lessonsTitle"></h2>
     </div>
     <p class="page__sub" id="lessonsGrade"></p>
-
-    <!-- المجتمع: فوق المحتوى -->
-    <button class="community-btn" id="communityBtn">
-      <span class="community-btn__ic">💬</span>
-      <span>المجتمع<small id="communitySub"></small></span>
-    </button>
 
     <!-- للأدمن بس -->
     <form class="addbox" id="lessonForm" hidden novalidate>
@@ -1504,27 +1503,17 @@
       </section>
 
       <!-- المحتوى -->
-      <!-- المجتمعات -->
-      <section id="tabCommunities" hidden>
-        <div class="addbox" id="notifBox" hidden>
-          <h3>إشعارات المتصفح</h3>
-          <p class="note-s">فعّلها عشان يجيلك إشعار على جهازك لما تيجي رسالة جديدة والموقع مفتوح في الخلفية.</p>
-          <button class="btn" id="enableNotif" type="button">🔔 فعّل الإشعارات</button>
+      <!-- واتساب -->
+      <section id="tabWhatsapp" hidden>
+        <p class="note-s">اختار الصف، وحط رابط كل محادثة (رابط جروب أو رقم). المحادثة من غير رابط بتظهر للطالب "قريباً".</p>
+        <div class="chips" id="waGrades"></div>
+        <div id="waAdmin"></div>
+        <div class="addbox" id="waWipeBox" hidden>
+          <h3>مسح المجتمعات القديمة</h3>
+          <p class="note-s">بيمسح من قاعدة البيانات كل رسايل المجتمعات القديمة والتثبيت والحظر والبلاغات.</p>
+          <button class="btn" id="waWipe" type="button" style="background:var(--pink);box-shadow:0 5px 0 #c93d65">مسح كل المجتمعات والمحادثات</button>
+          <div class="msg" id="waWipeMsg" role="alert"></div>
         </div>
-        <div class="ctl">
-          <span class="note-s" id="commTotal"></span>
-          <button class="tool" id="refreshCounts" type="button">تحديث العدد</button>
-        </div>
-        <div id="communityList"></div>
-      </section>
-
-      <section id="tabReports" hidden>
-        <div id="reportList"></div>
-        <form class="addbox" id="wordsForm" hidden novalidate>
-          <h3>كلمات ممنوعة في المجتمع</h3>
-          <label class="field"><textarea class="rtl" id="wordsText" rows="3" placeholder="كلمة في كل سطر"></textarea></label>
-          <button class="btn" type="submit">حفظ</button>
-        </form>
       </section>
 
       <section id="tabAnnounce" hidden>
@@ -1569,35 +1558,6 @@
 
   <button class="theme-btn" id="themeBtn" type="button" hidden><span></span></button>
 
-  <!-- ========== المجتمع ========== -->
-  <div class="panel chat" id="chat" aria-hidden="true">
-    <div class="panel__bar">
-      <div><h2 id="chatTitle">المجتمع</h2><span class="chip" id="chatState">مفتوح</span></div>
-      <div class="chat__tools">
-        <button class="tool" id="lockBtn" hidden>قفل المجموعة</button>
-        <button class="tool" id="bansBtn" hidden>المحظورين</button>
-        <button class="close" id="chatClose" aria-label="إغلاق">×</button>
-      </div>
-    </div>
-
-    <div class="chat__bans" id="banList" hidden></div>
-    <div class="chat__pin" id="pinBar" hidden></div>
-    <div class="chat__list" id="chatList" aria-live="polite"></div>
-    <button class="chat__down" id="chatDown" type="button" hidden aria-label="لآخر الرسايل">⬇</button>
-
-    <form class="chat__composer" id="chatForm">
-      <div class="chat__edit" id="editBar" hidden>
-        <span>بتعدّل رسالتك</span>
-        <button type="button" id="cancelEdit">إلغاء</button>
-      </div>
-      <div class="chat__row">
-        <input id="chatInput" maxlength="500" autocomplete="off" placeholder="اكتب رسالة...">
-        <button class="btn" type="submit" id="sendBtn" aria-label="إرسال"><span>➤</span></button>
-      </div>
-    </form>
-  </div>
-
-
   <!-- ========== التحكم في طالب (للمالك) ========== -->
   <div class="panel" id="stuPanel" aria-hidden="true">
     <div class="panel__bar">
@@ -1628,8 +1588,6 @@
         <h3>الحظر</h3>
         <div class="ctl"><span>الحساب كله</span><button class="tool" id="blockBtn" type="button"></button></div>
         <div class="ctl"><span>إجبار دخول جروب الواتساب</span><button class="tool" id="groupBtn" type="button"></button></div>
-        <p class="note-s">حظر من مجتمع مادة معينة:</p>
-        <div id="banChips"></div>
       </div>
 
       <div class="addbox">
@@ -1639,11 +1597,6 @@
         <div class="msg" id="accMsg" role="alert"></div>
         <button class="btn" id="accSave" type="button">حفظ</button>
         <button class="tool" id="accReset" type="button" style="width:100%;margin-top:8px">رجّعه لكل المحتوى</button>
-      </div>
-
-      <div class="addbox">
-        <h3>رسايله في المجتمع</h3>
-        <button class="btn" id="wipeMsgs" type="button" style="background:var(--pink);box-shadow:0 5px 0 #c93d65">مسح كل رسايله</button>
       </div>
 
       <div class="addbox" id="badgeBox">
@@ -1805,10 +1758,7 @@
     const isOwner    = () => currentRole === 'owner' && (auth.currentUser?.email || '').toLowerCase() === OWNER_EMAIL;
     const hasGrant   = (kind, grade, subj) => currentRole === 'guest' && myGrants.has(kind + ':' + grade + '_' + subj);
     const anyGrant   = kind => currentRole === 'guest' && [...myGrants].some(g => g.startsWith(kind + ':'));
-    const commPower  = cid => currentRole === 'owner' || (currentRole === 'guest' && myGrants.has('community:' + cid));
-    const commMod    = cid => commPower(cid) || currentRole === 'content';
     const canContent = (grade, subj) => currentRole === 'owner' || currentRole === 'content' || hasGrant('content', grade, subj);
-    const staffCommIds = () => communityIds().filter(commMod);
 
     async function getRole(user) {
       const email = (user.email || '').toLowerCase();
@@ -1906,6 +1856,8 @@
       document.getElementById('anncText').textContent = a.text || '';
       updateMaint();
       if (curTab === 'announce') fillSiteTab();
+      if (view.screen === 'subjects') renderWa();
+      if (curTab === 'whatsapp') renderWaAdmin();
     }
     function updateMaint() {
       const m = siteCfg.maint || {};
@@ -2196,7 +2148,6 @@
     const bellBtn = document.getElementById('bellBtn');
     const bellDot = document.getElementById('bellDot');
 
-    let reportCount = 0, reports = [], reportsUnsub = null, badWords = [], badUnsub = null;
     let pendingCount = 0, pendingFirst = true, pendingUnsub = null;   // طلبات تسجيل مستنية (للمدير)
     let myName = null;     // اسم الطالب
     const meAvatar = document.getElementById('meAvatar');
@@ -2276,7 +2227,7 @@
         try { localStorage.clear(); } catch (e) {}      // بوابة الواتساب، الثيم... إلخ
         try { sessionStorage.clear(); } catch (e) {}
         try { document.documentElement.removeAttribute('data-theme'); } catch (e) {}
-        try { closeAvMenu(); closeChat(); closeInbox(); closePanel(); } catch (e) {}
+        try { closeAvMenu(); closeInbox(); closePanel(); } catch (e) {}
         setTimeout(() => location.replace(location.pathname), 1200);
       } catch (err) {
         console.error(err);
@@ -2405,16 +2356,13 @@
       buildHome();
 
       panelBtn.hidden = !currentRole;
-      if (currentRole) watchCommunities(); else stopCommunityWatch();   // إشعارات الرسايل للأدمن
       if (currentRole === 'owner') watchPending(); else stopPendingWatch();   // طلبات التسجيل الجديدة
-      if (currentRole === 'owner') watchReports(); else stopReportWatch();    // بلاغات المجتمع: للمدير الرئيسي بس
-      if (user) watchBadWords(); else { if (badUnsub) badUnsub(); badUnsub = null; badWords = []; }
       if (isStudent) { track({}); if ('Notification' in window && Notification.permission === 'granted') enablePush(true); }
       pushBtn.hidden = !(isStudent && VAPID_KEY && 'Notification' in window && Notification.permission === 'default');
       if (currentRole === 'owner') watchRatings(); else stopRatingsWatch();
       if (currentRole === 'owner') watchDevNotes(); else stopDevWatch();   // كلمات الطلاب للمطور
       if (!currentRole) closePanel();
-      if (!user) { closeChat(); closeInbox(); if (view.screen !== 'home') show('home'); }
+      if (!user) { closeInbox(); if (view.screen !== 'home') show('home'); }
       else if (view.screen === 'lessons') subscribeLessons();   // الدور اتحدد: حدّث القائمة
     }
 
@@ -2445,7 +2393,6 @@
           if (!u || !u.exists()) { toast('اتشالت صلاحيات الأدمن من حسابك.'); await signOut(auth); return; }
         }
         const panelWasOpen = panel.classList.contains('is-open');
-        if (chat.classList.contains('is-open')) closeChat();
         await applyUser(user);
         if (panelWasOpen && currentRole) openPanel();
         toast(!nowRole ? 'اتشالت صلاحيات الأدمن من حسابك.' : '✅ اتحدّثت صلاحياتك.');
@@ -2469,8 +2416,7 @@
       admins:   ['الأدمن', 'tabAdmins'],
       log:      ['سجل الأدمن', 'tabLog'],
       guests:   ['ضيف أدمن', 'tabGuests'],
-      communities: ['المجتمعات', 'tabCommunities'],
-      reports:  ['البلاغات', 'tabReports'],
+      whatsapp: ['واتساب', 'tabWhatsapp'],
       announce: ['إعلان وصيانة', 'tabAnnounce'],
       stats:    ['الإحصائيات', 'tabStats'],
       content:  ['المحتوى', 'tabContent']
@@ -2505,10 +2451,9 @@
       document.getElementById('pRole').textContent = ROLE_LABELS[currentRole];
 
       if (currentRole === 'guest') {
-        panelTabs = [...(anyGrant('community') ? ['communities'] : []),
-                     ...(anyGrant('content') ? ['content'] : [])];
+        panelTabs = [...(anyGrant('content') ? ['content'] : [])];
         if (!panelTabs.length) return toast('مفيش صلاحيات متاحة لحسابك.');
-      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'ratings', 'reports', 'announce', 'stats', 'admins', 'guests', 'log', 'communities', 'content'] : ['communities', 'stats', 'content'];
+      } else panelTabs = currentRole === 'owner' ? ['students', 'devnotes', 'ratings', 'announce', 'stats', 'admins', 'guests', 'log', 'whatsapp', 'content'] : ['stats', 'content'];
       const allowed = panelTabs;
 
       if (currentRole === 'owner') {
@@ -2547,7 +2492,7 @@
     let panelTabs = [], curTab = null, tabsOpen = false;
 
     function renderTabs() {
-      const count = k => k === 'communities' ? commUnseen() : k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : k === 'reports' ? reportCount : 0;
+      const count = k => k === 'devnotes' ? devUnseen() : k === 'students' ? pendingCount : 0;
       const total = panelTabs.reduce((a, k) => a + count(k), 0);
       pTabs.innerHTML = `
         <button class="tabmenu" type="button" id="tabMenuBtn" aria-expanded="${tabsOpen}" aria-controls="tabList">
@@ -2570,9 +2515,8 @@
       Object.entries(TABS).forEach(([k, [, id]]) =>
         document.getElementById(id).hidden = k !== key);
       renderTabs();
-      if (key === 'communities') { loadCounts(); updateNotifBox(); }
+      if (key === 'whatsapp') renderWaAdmin();
       if (key === 'devnotes') { renderDevNotes(); markDevSeen(); }
-      if (key === 'reports') renderReports();
       if (key === 'ratings') renderRatings();
       if (key === 'announce') fillSiteTab();
       document.getElementById('exportBox').hidden = !isOwner();
@@ -2778,7 +2722,7 @@
 
     /* ---- ضيف أدمن: بيتعيّن من ملف الطالب (تاب الطلاب ← تحكم كامل ← تعيينه ضيف أدمن) ---- */
     const guestList = document.getElementById('guestList');
-    const KINDS = [['community', 'أدمن مجتمع'], ['content', 'أدمن محتوى']];
+    const KINDS = [['content', 'أدمن محتوى']];
     const grantLabel = g => {
       const m = /^(community|content):(\d)_([a-z]+)$/.exec(g);
       const sub = m && SUBJECTS.find(x => x.key === m[3]);
@@ -2985,261 +2929,6 @@
     document.getElementById('panelClose').addEventListener('click', closePanel);
 
     /* ==========================================================
-       المجتمع
-       الطالب : يكتب ويعدّل ويمسح رسايله بس
-       الأدمن : يمسح رسايل الطلاب (+ يكتب حتى لو المجموعة مقفولة)
-       المالك : يمسح أي رسالة، يقفل المجموعة، ويحظر الناس
-       ========================================================== */
-    const chat      = document.getElementById('chat');
-    const chatList  = document.getElementById('chatList');
-    const chatForm  = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const sendBtn   = document.getElementById('sendBtn');
-    const editBar   = document.getElementById('editBar');
-    const lockBtn   = document.getElementById('lockBtn');
-    const bansBtn   = document.getElementById('bansBtn');
-    const banList   = document.getElementById('banList');
-
-    let messages = [], bans = [], seen = new Set(), firstRender = true;
-    let chatClosed = false, iAmBanned = false, editingId = null, chatUnsubs = [];
-
-    const myUid = () => auth.currentUser?.uid;
-    const senderName = () => currentRole ? auth.currentUser.displayName : myName;
-    const chatPower = () => !!chatBase && commPower(chatBase[1]);
-    const canWrite = () => currentRole === 'owner' || chatPower() || (!iAmBanned && (!chatClosed || currentRole === 'content'));
-
-    let chatBase = null;   // مسار مجتمع المادة الحالية: ['communities', '0_arabic']
-
-    async function openCommunity(grade = view.grade, subject = view.subject) {
-      if (grade === null || !subject) return;
-      const user = auth.currentUser;
-      if (!user) { wantedGrade = null; return openLogin('student'); }
-
-      if (!currentRole && !myName) myName = await loadStudentName(user);
-      if (!currentRole && !myName) return toast('كمّل تسجيل الدخول الأول.');
-
-      if (currentRole && !user.displayName) {            // الأدمن يحدد اسمه مرة واحدة
-        const n = prompt('اكتب الاسم اللي هيظهر في المجتمع:');
-        if (!n || n.trim().length < 2) return;
-        await updateProfile(user, { displayName: n.trim() });
-      }
-
-      closeChat();
-      chatBase = ['communities', communityId(grade, subject)];
-      document.getElementById('chatTitle').textContent = 'مجتمع ' + communityLabel(chatBase[1]);
-      unseen[chatBase[1]] = 0;               // الأدمن شاف الرسايل
-      updateUnseenUI();
-      messages = []; seen = new Set(); firstRender = true; chatClosed = false; iAmBanned = false;
-      lockBtn.hidden = bansBtn.hidden = !chatPower();
-      banList.hidden = true;
-
-      chatUnsubs.push(onSnapshot(
-        query(collection(db, ...chatBase, 'messages'), orderBy('createdAt', 'desc'), limit(100)),
-        snap => { messages = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse(); renderChat(); },
-        dbError));
-      chatUnsubs.push(onSnapshot(doc(db, ...chatBase),
-        snap => { chatClosed = !!snap.data()?.closed; updateChatState(); }, dbError));
-      chatUnsubs.push(onSnapshot(doc(db, ...chatBase, 'pins', 'current'), snap => {
-        pinBar.hidden = !snap.exists();
-        if (snap.exists()) pinBar.innerHTML = '📌 <span>' + esc(snap.data().name) + ': ' + esc(snap.data().text) + '</span>' + (chatPower() || currentRole === 'content' ? '<button>فك التثبيت</button>' : '');
-      }, () => {}));
-      chatUnsubs.push(onSnapshot(doc(db, ...chatBase, 'bans', user.uid),
-        snap => { iAmBanned = snap.exists(); updateChatState(); }, () => {}));
-      if (chatPower()) {
-        chatUnsubs.push(onSnapshot(collection(db, ...chatBase, 'bans'),
-          snap => { bans = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderBans(); }, dbError));
-      }
-
-      chat.classList.add('is-open');
-      chat.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeChat() {
-      chatUnsubs.forEach(u => u());
-      chatUnsubs = [];
-      cancelEdit();
-      chat.classList.remove('is-open');
-      chat.setAttribute('aria-hidden', 'true');
-      if (!panel.classList.contains('is-open')) document.body.style.overflow = '';
-    }
-
-    /* حالة المجموعة: مفتوحة / مقفولة / محظور */
-    function updateChatState() {
-      document.getElementById('chatState').textContent = chatClosed ? 'مقفولة' : 'مفتوحة';
-      lockBtn.textContent = chatClosed ? 'فتح المجموعة' : 'قفل المجموعة';
-
-      const ok = canWrite();
-      chatInput.disabled = sendBtn.disabled = !ok;
-      chatInput.placeholder = iAmBanned && !chatPower() ? 'انت محظور من المجتمع.'
-                            : !ok ? 'المجموعة مقفولة حالياً.'
-                            : 'اكتب رسالة...';
-      renderChat();
-    }
-
-    function timeOf(m) {
-      const d = m.createdAt?.toDate?.();
-      return d ? d.toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' }) : 'الآن';
-    }
-
-    function renderChat() {
-      const nearBottom = chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight < 140;
-
-      const openId = chatList.querySelector('.m--open')?.dataset.id;   // نفضّل أزرار الرسالة مفتوحة بعد التحديث
-      const hue = n => [...String(n)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
-      const dayOf = m => m.createdAt?.toDate?.() || new Date();
-      const dayLabel = d => {
-        const t = new Date(), y = new Date(Date.now() - 864e5);
-        return d.toDateString() === t.toDateString() ? 'النهاردة' : d.toDateString() === y.toDateString() ? 'امبارح'
-          : d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' });
-      };
-
-      chatList.innerHTML = messages.length ? messages.map((m, i) => {
-        const mine = m.uid === myUid();
-        const isNew = !firstRender && !seen.has(m.id);
-        const badge = m.role === 'owner' ? '<span class="badge badge--owner">👑 المالك</span>'
-                    : (m.role === 'content' || m.role === 'guest') ? '<span class="badge badge--admin">أدمن</span>' : '';
-
-        const prev = messages[i - 1];
-        const newDay = !prev || dayOf(prev).toDateString() !== dayOf(m).toDateString();
-        const cont = !newDay && prev.uid === m.uid;                      // نفس الشخص ورا بعض: من غير اسم وصورة
-        const sep = newDay ? `<div class="day"><span>${dayLabel(dayOf(m))}</span></div>` : '';
-
-        const canEdit = mine && canWrite();
-        const canDelete = mine || chatPower() || (currentRole === 'content' && m.role === 'student');
-        const canBan = chatPower() && !mine && m.role !== 'owner';
-        const canReport = !currentRole && !mine && m.role === 'student';
-        const roleCls = m.role === 'owner' ? 'm--owner' : (m.role === 'content' || m.role === 'guest') ? 'm--admin' : '';
-        const av = mine ? '' : cont ? '<span class="avatar avatar--letter mav mav--gap"></span>'
-          : withCrown(`<span class="avatar avatar--letter mav" style="background:hsl(${hue(m.name)} 62% 46%)">${esc(initial(m.name))}</span>`, m.badge);
-
-        return `${sep}
-          <div class="mrow ${mine ? 'mrow--me' : ''} ${cont ? 'mrow--cont' : ''}">
-            <div class="m ${mine ? 'm--me' : ''} ${roleCls} ${isNew ? 'm--new' : ''} ${m.id === openId ? 'm--open' : ''}" data-id="${esc(m.id)}">
-              ${cont || mine ? '' : `<div class="m__head"><b style="color:hsl(${hue(m.name)} 60% 42%)">${esc(m.name)}</b>${nameBadge(m.badge)}${badge}</div>`}
-              <div class="m__text">${esc(m.text)}</div>
-              <div class="m__meta">${timeOf(m)}${m.edited ? ' · معدّلة' : ''}</div>
-              <div class="m__acts">
-                ${canEdit ? '<button data-act="edit">تعديل</button>' : ''}
-                ${canDelete ? '<button data-act="del">مسح</button>' : ''}
-                ${canBan ? '<button data-act="ban">حظر</button>' : ''}
-                ${canReport ? '<button data-act="report">إبلاغ</button>' : ''}
-                ${chatPower() || currentRole === 'content' ? '<button data-act="pin">تثبيت</button>' : ''}
-              </div>
-            </div>${av}
-          </div>`;
-      }).join('') : '<p class="empty">ابدأ أول رسالة في المجتمع.</p>';
-
-      messages.forEach(m => seen.add(m.id));
-      if (firstRender || nearBottom) chatList.scrollTop = chatList.scrollHeight;
-      chatDown.hidden = firstRender || nearBottom;
-      firstRender = false;
-    }
-
-    /* ---- أزرار الرسايل ---- */
-    const chatDown = document.getElementById('chatDown');
-    chatList.addEventListener('scroll', () => { chatDown.hidden = chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight < 140; });
-    chatDown.addEventListener('click', () => { chatList.scrollTop = chatList.scrollHeight; chatDown.hidden = true; });
-
-    chatList.addEventListener('click', async e => {
-      const bubble = e.target.closest('.m');
-      if (bubble && !e.target.closest('button')) {            // دوس على الرسالة: تظهر أزرارها
-        const was = bubble.classList.contains('m--open');
-        chatList.querySelectorAll('.m--open').forEach(x => x.classList.remove('m--open'));
-        if (!was) bubble.classList.add('m--open');
-        return;
-      }
-      const btn = e.target.closest('button[data-act]');
-      if (!btn) return;
-      const m = messages.find(x => x.id === btn.closest('.m').dataset.id);
-      if (!m) return;
-      try {
-        if (btn.dataset.act === 'edit') {
-          editingId = m.id;
-          chatInput.value = m.text;
-          editBar.hidden = false;
-          chatInput.focus();
-        }
-        if (btn.dataset.act === 'del' && confirm('مسح الرسالة؟')) {
-          await deleteDoc(doc(db, ...chatBase, 'messages', m.id));
-          logAct('مسح رسالة', m.name + ': ' + String(m.text).slice(0, 80) + ' — ' + communityLabel(chatBase[1]));
-          if (counts[chatBase[1]] != null) { counts[chatBase[1]]--; renderCommunities(); }
-          if (editingId === m.id) cancelEdit();
-        }
-        if (btn.dataset.act === 'report' && confirm('تبلّغ الإدارة عن الرسالة دي؟')) {
-          await setDoc(doc(db, 'reports', chatBase[1] + '_' + m.id + '_' + myUid()), {
-            c: chatBase[1], mid: m.id, muid: m.uid, mname: m.name, text: String(m.text).slice(0, 200),
-            ruid: myUid(), rname: myName || '', status: 'open', createdAt: serverTimestamp() });
-          toast('وصل البلاغ للإدارة. شكراً.');
-        }
-        if (btn.dataset.act === 'pin') {
-          await setDoc(doc(db, ...chatBase, 'pins', 'current'), { name: m.name, text: String(m.text).slice(0, 200), at: serverTimestamp() });
-          logAct('ثبّت رسالة', m.name + ': ' + String(m.text).slice(0, 80) + ' — ' + communityLabel(chatBase[1]));
-          toast('الرسالة اتثبتت');
-        }
-        if (btn.dataset.act === 'ban' && confirm('حظر ' + m.name + ' من المجتمع؟')) {
-          await setDoc(doc(db, ...chatBase, 'bans', m.uid), { name: m.name, at: serverTimestamp() });
-          logAct('حظر طالب', m.name + ' — ' + communityLabel(chatBase[1]));
-          toast('اتحظر ' + m.name);
-        }
-      } catch (err) { dbError(err); }
-    });
-
-    function cancelEdit() {
-      editingId = null;
-      editBar.hidden = true;
-      chatInput.value = '';
-    }
-
-    /* ---- الإرسال / التعديل ---- */
-    chatForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text || !canWrite()) return;
-      if (!currentRole && hasBad(text)) return toast('الرسالة فيها كلام مش مسموح في المجتمع.');
-      chatInput.value = '';
-      try {
-        if (editingId) {
-          await updateDoc(doc(db, ...chatBase, 'messages', editingId), { text, edited: true });
-          cancelEdit();
-        } else {
-          await addDoc(collection(db, ...chatBase, 'messages'), {
-            uid: myUid(), name: senderName(), role: currentRole || 'student',
-            ...(!currentRole && myBadge ? { badge: myBadge } : {}),
-            text, createdAt: serverTimestamp()
-          });
-        }
-      } catch (err) { chatInput.value = text; dbError(err); }
-    });
-
-    /* ---- المالك: قفل المجموعة والمحظورين ---- */
-    lockBtn.addEventListener('click', async () => {
-      try {
-        await setDoc(doc(db, ...chatBase), { closed: !chatClosed });
-        logAct(chatClosed ? 'فتح مجموعة' : 'قفل مجموعة', communityLabel(chatBase[1]));
-        toast(chatClosed ? 'المجموعة اتفتحت' : 'المجموعة اتقفلت');
-      } catch (err) { dbError(err); }
-    });
-
-    function renderBans() {
-      banList.innerHTML = bans.length
-        ? bans.map(b => `<div class="ban"><span>${esc(b.name)}</span><button data-uid="${esc(b.id)}">فك الحظر</button></div>`).join('')
-        : '<p class="empty" style="padding:8px">مفيش محظورين.</p>';
-    }
-
-    bansBtn.addEventListener('click', () => { banList.hidden = !banList.hidden; });
-    banList.addEventListener('click', async e => {
-      const b = e.target.closest('button[data-uid]');
-      if (!b) return;
-      try { await deleteDoc(doc(db, ...chatBase, 'bans', b.dataset.uid)); logAct('فك حظر', (bans.find(x => x.id === b.dataset.uid)?.name || '') + ' — ' + communityLabel(chatBase[1])); toast('اتفك الحظر'); }
-      catch (err) { dbError(err); }
-    });
-
-    document.getElementById('communityBtn').addEventListener('click', () => openCommunity(view.grade, view.subject));
-    document.getElementById('chatClose').addEventListener('click', closeChat);
-    document.getElementById('cancelEdit').addEventListener('click', cancelEdit);
-
-    /* ==========================================================
        الشاشات: اختار صفك ← المادة ← المحتوى
        - اختيار الصف محتاج تسجيل دخول
        - الطالب يشوف المحتوى الظاهر بس، والأدمن يشوف ويتحكم في الكل
@@ -3313,6 +3002,7 @@
       document.getElementById('subjGrade').textContent = g.name;
       renderSubjects();
       renderHelpers();
+      renderWa();
       show('subjects');
     }
 
@@ -3359,7 +3049,6 @@
       const sub = SUBJECTS.find(x => x.key === key);
       document.getElementById('lessonsTitle').textContent = subjectName(view.grade, sub);
       document.getElementById('lessonsGrade').textContent = GRADES[view.grade].name;
-      document.getElementById('communitySub').textContent = 'مجتمع ' + subjectName(view.grade, sub) + ' · ' + GRADES[view.grade].name;
       resetLessonForm();
       lessons = [];
       lessonList.innerHTML = '';
@@ -3748,7 +3437,7 @@
        تنبيه / رسالة، حظر، محتوى أكتر وأقل، مسح رسايله
        ========================================================== */
     const stuPanel = document.getElementById('stuPanel');
-    let stuId = null, stuBans = {}, sendType = 'alert';
+    let stuId = null, sendType = 'alert';
     const accSel = { grades: new Set(), subjects: new Set() };
     const stu = () => students.find(x => x.id === stuId);
     const sheetMsg = (id, text, ok) => {
@@ -3763,7 +3452,6 @@
       if (!s) return;
       accSel.grades   = new Set(s.access ? s.access.grades   : GRADES.map((_, i) => i));
       accSel.subjects = new Set(s.access ? s.access.subjects : SUBJECTS.map(x => x.key));
-      stuBans = {};
       document.getElementById('sendText').value = '';
       sheetMsg('sendMsg', ''); sheetMsg('accMsg', ''); sheetMsg('stuAdminMsg', '');
       fillStuAdmin();
@@ -3771,13 +3459,6 @@
       stuPanel.classList.add('is-open');
       stuPanel.setAttribute('aria-hidden', 'false');
       renderStudentSheet();
-      try {
-        const ids = communityIds();
-        const snaps = await Promise.all(ids.map(c => getDoc(doc(db, 'communities', c, 'bans', id))));
-        if (stuId !== id) return;
-        stuBans = Object.fromEntries(ids.map((c, i) => [c, snaps[i].exists()]));
-        renderStudentSheet();
-      } catch (err) { dbError(err); }
     }
 
     function closeStudent() {
@@ -3808,12 +3489,6 @@
       document.getElementById('blockBtn').textContent = s.blocked ? 'فك الحظر' : 'حظر الحساب';
       document.getElementById('groupBtn').textContent = s.needGroup ? 'إلغاء الإجبار' : 'تفعيل الإجبار';
 
-      document.getElementById('banChips').innerHTML = GRADES.map((g, gi) => `
-        <p class="note-s">${g.name}</p>
-        <div class="chips">${SUBJECTS.map(x => {
-          const c = communityId(gi, x.key);
-          return `<button type="button" class="cb cb--ban" data-c="${c}" aria-pressed="${!!stuBans[c]}">${subjectName(gi, x)}</button>`;
-        }).join('')}</div>`).join('');
       document.getElementById('accGrades').innerHTML = GRADES.map((g, i) =>
         `<button type="button" class="cb" data-g="${i}" aria-pressed="${accSel.grades.has(i)}">${g.name}</button>`).join('');
       document.getElementById('accSubjects').innerHTML = SUBJECTS.map(x =>
@@ -3859,21 +3534,6 @@
       try {
         await updateDoc(doc(db, 'users', s.id), { needGroup: !s.needGroup });
         logStu(s.id, s.needGroup ? 'إلغاء إجبار الجروب' : 'تفعيل إجبار الجروب'); toast(s.needGroup ? 'اتلغى إجبار الجروب' : 'اتفعّل إجبار الجروب على الطالب');
-      } catch (err) { dbError(err); }
-    });
-
-    /* حظر من مجتمع مادة معينة */
-    document.getElementById('banChips').addEventListener('click', async e => {
-      const b = e.target.closest('.cb');
-      if (!b) return;
-      const c = b.dataset.c, s = stu();
-      const ref = doc(db, 'communities', c, 'bans', s.id);
-      try {
-        if (stuBans[c]) await deleteDoc(ref);
-        else await setDoc(ref, { name: s.name, at: serverTimestamp() });
-        stuBans[c] = !stuBans[c];
-        renderStudentSheet();
-        toast((stuBans[c] ? 'اتحظر من ' : 'اتفك حظره من ') + communityLabel(c));
       } catch (err) { dbError(err); }
     });
 
@@ -3953,25 +3613,6 @@
         await updateDoc(doc(db, 'users', stuId), { access: deleteField() });
         sheetMsg('accMsg', 'اتفتح له كل المحتوى.', true);
       } catch (err) { sheetMsg('accMsg', authMessage(err)); }
-    });
-
-    /* مسح كل رسايله من مجتمعات الصفوف الأربعة */
-    document.getElementById('wipeMsgs').addEventListener('click', async () => {
-      const s = stu();
-      if (!s || !confirm('مسح كل رسايل ' + s.name + ' في كل المجتمعات؟')) return;
-      try {
-        let total = 0;
-        for (const c of communityIds()) {
-          const snap = await getDocs(query(collection(db, 'communities', c, 'messages'), where('uid', '==', s.id)));
-          for (let i = 0; i < snap.docs.length; i += 400) {
-            const batch = writeBatch(db);
-            snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          }
-          total += snap.size;
-        }
-        toast('اتمسح ' + total + ' رسالة');
-      } catch (err) { dbError(err); }
     });
 
     document.getElementById('renameBtn').addEventListener('click', async () => {
@@ -4076,7 +3717,7 @@
     };
     const noteTarget = n => n.to === 'teacher' ? 'teacher' : 'dev';   // الكلمات القديمة = للمبرمج
 
-    const anyPanelOpen = () => [panel, chat, inboxPanel, stuPanel, devPanel, ratePanel].some(el => el.classList.contains('is-open'));
+    const anyPanelOpen = () => [panel, inboxPanel, stuPanel, devPanel, ratePanel].some(el => el.classList.contains('is-open'));
 
     function renderMyNotes() {
       const mine = myNotes.filter(n => noteTarget(n) === devTarget);
@@ -4451,99 +4092,16 @@
     });
 
     /* ==========================================================
-       قسم المجتمعات للأدمن
-       - قايمة بالـ12 مجتمع وجنب كل واحد عدد الرسايل
-       - أي رسالة جديدة: شريط تنبيه + صوت + إشعار متصفح + عدّاد
-       (الإشعارات شغالة طول ما الموقع مفتوح عند الأدمن)
+       عدّاد لوحة التحكم + صوت التنبيه
        ========================================================== */
-    let counts = {}, unseen = {}, commUnsubs = [];
     const panelDot = document.getElementById('panelDot');
-    const commUnseen = () => Object.values(unseen).reduce((a, b) => a + b, 0);
-    const unseenTotal = () => commUnseen() + devUnseen();
-
-    async function loadCounts() {
-      try {
-        const ids = staffCommIds();
-        const res = await Promise.all(ids.map(c => getCountFromServer(collection(db, 'communities', c, 'messages'))));
-        ids.forEach((c, i) => { counts[c] = res[i].data().count; });
-        renderCommunities();
-      } catch (err) { dbError(err); }
-    }
-
-    function renderCommunities() {
-      const ids = staffCommIds();
-      const total = ids.reduce((sum, c) => sum + (counts[c] || 0), 0);
-      document.getElementById('commTotal').textContent = 'إجمالي الرسايل: ' + total;
-      document.getElementById('communityList').innerHTML = ids.map((c, i) => {
-        const [g, key] = c.split('_');
-        const sub = SUBJECTS.find(x => x.key === key);
-        const n = counts[c], u = unseen[c] || 0;
-        return `
-          <div class="row" data-c="${c}" style="--i:${Math.min(i, 8)}">
-            <div class="row__info"><b>${subjectName(Number(g), sub)} ${GRADES[g].name}${u ? `<span class="pill">+${u}</span>` : ''}</b></div>
-            <span class="chip">💬 ${n == null ? '…' : n}</span>
-            <div class="row__acts"><button data-act="open">فتح المجتمع</button></div>
-          </div>`;
-      }).join('');
-    }
-
-    document.getElementById('communityList').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-act="open"]');
-      if (!btn) return;
-      const [g, key] = btn.closest('.row').dataset.c.split('_');
-      openCommunity(Number(g), key);
-    });
-    document.getElementById('refreshCounts').addEventListener('click', loadCounts);
+    const unseenTotal = () => devUnseen();
 
     function updateUnseenUI() {
-      const n = unseenTotal() + pendingCount + reportCount;
+      const n = unseenTotal() + pendingCount;
       panelDot.hidden = n === 0;
       panelDot.textContent = n;
       if (panel.classList.contains('is-open')) renderTabs();
-      renderCommunities();
-    }
-
-    /* ---- مراقبة آخر رسالة في كل مجتمع ---- */
-    function watchCommunities() {
-      stopCommunityWatch();
-      staffCommIds().forEach(c => {
-        let latest = null;            // وقت آخر رسالة وقت التشغيل
-        commUnsubs.push(onSnapshot(
-          query(collection(db, 'communities', c, 'messages'), orderBy('createdAt', 'desc'), limit(1)),
-          snap => {
-            if (latest === null) { latest = snap.docs[0]?.data().createdAt?.toMillis?.() || 0; return; }
-            snap.docChanges().forEach(ch => {
-              if (ch.type !== 'added') return;
-              const m = ch.doc.data();
-              const t = m.createdAt?.toMillis?.();
-              if (!t || t <= latest) return;          // قديمة أو لسه بتتكتب
-              latest = t;
-              notifyMessage(c, m);
-            });
-          }, () => {}));
-      });
-    }
-
-    function stopCommunityWatch() {
-      commUnsubs.forEach(u => u());
-      commUnsubs = [];
-      counts = {}; unseen = {};
-      if (panelDot) panelDot.hidden = true;
-    }
-
-    function notifyMessage(c, m) {
-      if (counts[c] != null) counts[c]++;
-      const viewing = chat.classList.contains('is-open') && chatBase && chatBase[1] === c;
-      if (m.uid === myUid() || viewing) return renderCommunities();   // رسالتي أو قدامي: من غير إشعار
-
-      unseen[c] = (unseen[c] || 0) + 1;
-      const snippet = String(m.text).slice(0, 70);
-      showAlert(communityLabel(c) + ' · ' + m.name + ': ' + snippet);
-      beep();
-      if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-        new Notification('Learn With Me — ' + communityLabel(c), { body: m.name + ': ' + snippet });
-      }
-      updateUnseenUI();
     }
 
     function beep() {
@@ -4557,16 +4115,6 @@
         osc.start(); osc.stop(ctx.currentTime + .35);
       } catch (e) { /* مفيش صوت */ }
     }
-
-    /* إشعارات المتصفح */
-    function updateNotifBox() {
-      document.getElementById('notifBox').hidden =
-        !('Notification' in window) || Notification.permission !== 'default';
-    }
-    document.getElementById('enableNotif').addEventListener('click', async () => {
-      try { await Notification.requestPermission(); } catch (e) {}
-      updateNotifBox();
-    });
 
     /* ---- الأحداث ---- */
     seg.addEventListener('click', e => {
@@ -4632,79 +4180,134 @@
     });
 
     /* ==========================================================
-       بلاغات المجتمع + تثبيت رسالة + كلمات ممنوعة
+       واتساب: 5 محادثات لكل صف (كلم المستر، كلم داما، مجتمع العربي/العلوم/الدراسات)
+       الأدمن (المدير) هو اللي بيحط الرابط ويظهّر/يخفي كل محادثة، لكل صف لوحده.
+       بتتخزن في settings/site ← wa ← "رقم_الصف + _ + المفتاح"
        ========================================================== */
-    const pinBar = document.getElementById('pinBar');
-    pinBar.addEventListener('click', async e => {
-      if (!e.target.closest('button')) return;
-      try { await deleteDoc(doc(db, ...chatBase, 'pins', 'current')); } catch (err) { dbError(err); }
+    const WA_CHATS = [
+      { key: 'mister',  icon: '👨‍🏫', title: () => 'كلم المستر',  sub: 'سؤال أو ملاحظة للمستر' },
+      { key: 'dama',    icon: '💬',   title: () => 'كلم داما',    sub: 'كلّم داما على واتساب' },
+      ...SUBJECTS.map(x => ({ key: x.key, icon: '👥', subject: x,
+        title: g => 'مجتمع ' + subjectName(g, x), sub: g => 'جروب ' + subjectName(g, x) + ' · ' + GRADES[g].name }))
+    ];
+    const waId  = (grade, key) => grade + '_' + key;
+    const waCfg = (grade, key) => ((siteCfg.wa || {})[waId(grade, key)]) || {};
+
+    /* رابط واتساب مقبول بس (أو رقم يتحوّل لرابط wa.me) */
+    function cleanWaUrl(v) {
+      v = String(v || '').trim();
+      if (!v) return '';
+      const digits = v.replace(/[\s+()-]/g, '');
+      if (/^\d{8,15}$/.test(digits)) return 'https://wa.me/' + digits;
+      try {
+        const u = new URL(v);
+        const ok = u.protocol === 'https:' && ['chat.whatsapp.com', 'wa.me', 'api.whatsapp.com', 'whatsapp.com', 'www.whatsapp.com'].includes(u.hostname);
+        return ok ? u.href : null;
+      } catch (e) { return null; }
+    }
+
+    /* الطالب */
+    function renderWa() {
+      const box = document.getElementById('waList');
+      if (view.grade === null) { box.innerHTML = ''; return; }
+      const g = view.grade;
+      box.innerHTML = WA_CHATS.map((c, k) => {
+        const cfg = waCfg(g, c.key);
+        if (cfg.on === false && !currentRole) return '';
+        const locked = c.subject && !canSubject(c.key);
+        const url = cleanWaUrl(cfg.url);
+        const ready = !!url && !locked;
+        return `
+        <button class="helper" data-k="${c.key}" style="--i:${k}" ${ready ? '' : 'aria-disabled="true"'}>
+          <span class="helper__ic">${locked ? '🔒' : c.icon}</span>
+          <span><b>${esc(c.title(g))}</b><small>${locked ? 'مش متاحة ليك' : ready ? esc(c.sub(g)) : 'لسه مش جاهزة'}</small></span>
+          <span class="helper__go">${ready ? 'واتساب' : 'قريباً'}</span>
+        </button>`;
+      }).join('');
+    }
+    document.getElementById('waList').addEventListener('click', e => {
+      const b = e.target.closest('.helper');
+      if (!b) return;
+      const c = WA_CHATS.find(x => x.key === b.dataset.k);
+      if (c.subject && !canSubject(c.key)) return toast('المحادثة دي مش متاحة ليك. كلّم الإدارة.');
+      const url = cleanWaUrl(waCfg(view.grade, c.key).url);
+      if (!url) return toast('المحادثة دي لسه مش جاهزة.');
+      window.open(url, '_blank', 'noopener');
     });
 
-    function watchReports() {
-      stopReportWatch();
-      const bySrc = {}, firsts = {};
-      /* الضيف بيقرا بلاغات كل مجتمع بيديره في استعلام لوحده (عشان قواعد Firestore) */
-      const srcs = currentRole === 'guest' ? staffCommIds() : [null];
-      const unsubs = srcs.map(c => onSnapshot(
-        query(collection(db, 'reports'), where('status', '==', 'open'), ...(c ? [where('c', '==', c)] : [])),
-        snap => {
-          if (firsts[c]) snap.docChanges().forEach(ch => { if (ch.type === 'added') toast('🚩 بلاغ جديد على رسالة'); });
-          firsts[c] = true;
-          bySrc[c] = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => commMod(r.c));
-          reports = Object.values(bySrc).flat().sort((x, y) => (y.createdAt?.seconds || 0) - (x.createdAt?.seconds || 0));
-          reportCount = reports.length;
-          updateUnseenUI(); renderReports();
-        }, () => {}));
-      reportsUnsub = () => unsubs.forEach(u => u());
+    /* الأدمن (المدير الرئيسي) */
+    let waGrade = 0;
+    function renderWaAdmin() {
+      if (document.activeElement && document.activeElement.closest && document.activeElement.closest('#waAdmin')) return;   // مننساش اللي بيكتبه
+      document.getElementById('waGrades').innerHTML = GRADES.map((g, i) =>
+        `<button type="button" class="cb" data-g="${i}" aria-pressed="${waGrade === i}">${g.name}</button>`).join('');
+      document.getElementById('waWipeBox').hidden = !isOwner();
+      document.getElementById('waAdmin').innerHTML = WA_CHATS.map(c => {
+        const cfg = waCfg(waGrade, c.key);
+        return `
+        <div class="addbox" data-k="${c.key}">
+          <h3>${esc(c.title(waGrade))} · ${esc(GRADES[waGrade].name)}</h3>
+          <label class="field"><span>رابط الجروب أو رقم الواتساب</span>
+            <input type="text" dir="ltr" inputmode="url" data-f="url" value="${esc(cfg.url || '')}" placeholder="https://chat.whatsapp.com/... أو 201xxxxxxxxx">
+          </label>
+          <div class="ctl"><span>${cfg.on === false ? 'مخفية عن الطلاب' : 'ظاهرة للطلاب'}</span><button class="tool" data-act="vis" type="button">${cfg.on === false ? 'إظهار' : 'إخفاء'}</button></div>
+          <button class="btn" data-act="save" type="button">حفظ</button>
+        </div>`;
+      }).join('');
     }
-    function stopReportWatch() { if (reportsUnsub) reportsUnsub(); reportsUnsub = null; reports = []; reportCount = 0; }
-
-    function renderReports() {
-      document.getElementById('wordsForm').hidden = currentRole !== 'owner';
-      document.getElementById('reportList').innerHTML = reports.length ? reports.map(r => `
-        <div class="row" data-id="${esc(r.id)}">
-          <div class="row__info"><b>${esc(r.mname)}</b><small>${esc(communityLabel(r.c))} · بلاغ من ${esc(r.rname)}</small><p>${esc(r.text)}</p></div>
-          <div class="row__acts">
-            <button data-act="del">مسح الرسالة</button>
-            ${commPower(r.c) ? '<button data-act="ban">حظر</button>' : ''}
-            <button data-act="ok">تجاهل</button>
-          </div>
-        </div>`).join('') : '<p class="empty">مفيش بلاغات.</p>';
-    }
-
-    document.getElementById('reportList').addEventListener('click', async e => {
+    document.getElementById('waGrades').addEventListener('click', e => {
+      const b = e.target.closest('.cb');
+      if (!b) return;
+      waGrade = Number(b.dataset.g);
+      renderWaAdmin();
+    });
+    document.getElementById('waAdmin').addEventListener('click', async e => {
       const b = e.target.closest('button[data-act]');
-      const r = b && reports.find(x => x.id === b.closest('.row').dataset.id);
-      if (!r) return;
+      if (!b) return;
+      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      const card = b.closest('.addbox'), key = card.dataset.k, id = waId(waGrade, key);
+      const cfg = waCfg(waGrade, key);
       try {
-        if (b.dataset.act === 'del') { await deleteDoc(doc(db, 'communities', r.c, 'messages', r.mid)); if (counts[r.c] != null) { counts[r.c]--; renderCommunities(); } }
-        if (b.dataset.act === 'ban') {
-          if (!confirm('حظر ' + r.mname + ' من المجتمع؟')) return;
-          await setDoc(doc(db, 'communities', r.c, 'bans', r.muid), { name: r.mname, at: serverTimestamp() });
+        if (b.dataset.act === 'save') {
+          const raw = card.querySelector('[data-f="url"]').value;
+          const url = cleanWaUrl(raw);
+          if (url === null) return toast('الرابط لازم يكون رابط واتساب (chat.whatsapp.com أو wa.me) أو رقم.');
+          await setDoc(siteRef, { wa: { [id]: { url, on: cfg.on !== false } } }, { merge: true });
+          toast('اتحفظ');
+        } else {
+          await setDoc(siteRef, { wa: { [id]: { url: cfg.url || '', on: cfg.on === false } } }, { merge: true });
         }
-        await Promise.all(reports.filter(x => x.c === r.c && x.mid === r.mid)
-          .map(x => updateDoc(doc(db, 'reports', x.id), { status: 'closed' })));
       } catch (err) { dbError(err); }
     });
 
-    /* الكلمات الممنوعة: الفلترة عند الطالب (حماية خفيفة، مش قفل كامل) */
-    const norm = s => String(s).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا')
-      .replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/(.)\1{2,}/g, '$1').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-    const hasBad = t => { const p = ' ' + norm(t) + ' '; return badWords.some(w => p.includes(' ' + w + ' ')); };
-
-    function watchBadWords() {
-      if (badUnsub) return;
-      badUnsub = onSnapshot(doc(db, 'settings', 'moderation'), snap => {
-        const words = snap.data()?.words || [];
-        badWords = words.map(norm).filter(Boolean);
-        const box = document.getElementById('wordsText');
-        if (document.activeElement !== box) box.value = words.join('\n');
-      }, () => {});
+    /* مسح المجتمعات والمحادثات القديمة من قاعدة البيانات (مرة واحدة) */
+    async function wipeCol(colRef) {
+      const snap = await getDocs(colRef);
+      for (let i = 0; i < snap.docs.length; i += 400) {
+        const batch = writeBatch(db);
+        snap.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      return snap.size;
     }
-    document.getElementById('wordsForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const words = document.getElementById('wordsText').value.split('\n').map(w => w.trim()).filter(Boolean).slice(0, 300);
-      try { await setDoc(doc(db, 'settings', 'moderation'), { words }); toast('اتحفظت الكلمات'); } catch (err) { dbError(err); }
+    document.getElementById('waWipe').addEventListener('click', async () => {
+      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!confirm('هيتمسح نهائي كل رسايل المجتمعات القديمة والتثبيت والحظر والبلاغات. متأكد؟')) return;
+      const msg = document.getElementById('waWipeMsg'), btn = document.getElementById('waWipe');
+      btn.disabled = true; msg.textContent = 'بيمسح...';
+      let n = 0, fails = 0;
+      const run = async fn => { try { n += await fn(); } catch (e) { fails++; } };
+      try {
+        for (const c of communityIds()) {
+          await run(() => wipeCol(collection(db, 'communities', c, 'messages')));
+          await run(() => wipeCol(collection(db, 'communities', c, 'pins')));
+          await run(() => wipeCol(collection(db, 'communities', c, 'bans')));
+          try { await deleteDoc(doc(db, 'communities', c)); } catch (e) { fails++; }
+        }
+        await run(() => wipeCol(collection(db, 'reports')));
+        try { await deleteDoc(doc(db, 'settings', 'moderation')); } catch (e) { fails++; }
+        msg.textContent = 'اتمسح ' + n + ' عنصر.' + (fails ? ' (' + fails + ' عملية اترفضت من قواعد Firestore)' : '');
+      } finally { btn.disabled = false; }
     });
 
     /* ==========================================================
