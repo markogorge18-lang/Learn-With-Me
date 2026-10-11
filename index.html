@@ -1290,6 +1290,31 @@
     .wa-irow b small{margin-inline-start:6px;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:1px}
     .wa-irow > small{color:#8696a0;font-size:12px;text-align:left}
     .wa-irow .wa-av{width:38px;height:38px;font-size:16px}
+    .wa-av--btn{border:0;padding:0;cursor:pointer;font-family:inherit}
+    .wa-av--btn:active{transform:scale(.93)}
+    .wa-teach{flex:none;display:flex;align-items:center;gap:10px;padding:6px 14px;background:#182229;border-bottom:1px solid #2a3942;font-size:13px;color:#8696a0}
+    .wa-teach[hidden]{display:none}
+    .wa-teach .avatar{width:30px;height:30px;font-size:14px}
+    .wa-teach b{color:#e9edef;font-weight:600}
+    .wa-teach small{margin-inline-start:auto;font-size:11.5px}
+    .wa-rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;clear:both}
+    .wa-rxc{display:inline-flex;align-items:center;gap:3px;border:1px solid rgba(134,150,160,.35);background:rgba(0,0,0,.22);color:inherit;border-radius:99px;padding:1px 8px;font:600 14px 'IBM Plex Sans Arabic',sans-serif;cursor:pointer}
+    .wa-rxc i{font-style:normal;font-size:11.5px;color:#aebac1}
+    .wa-rxc.on{background:rgba(0,168,132,.28);border-color:#00a884}
+    .wa-ed{font-style:normal;margin-inline-end:5px}
+    .wa-sheet .wa-rxbar{display:flex;gap:6px;margin:2px 0 8px}
+    .wa-sheet .wa-rxbar button[data-x]{width:auto;flex:1;justify-content:center;padding:8px 0;font-size:24px;border-radius:99px;background:#202c33}
+    .wa-sheet .wa-rxbar button.on{background:rgba(0,168,132,.32)}
+    .wa-tools select{width:100%;padding:10px 12px;margin-bottom:8px;border-radius:10px;border:1px solid #2a3942;background:#202c33;color:#e9edef;font:500 15px 'IBM Plex Sans Arabic',sans-serif}
+    .wa-msearch{width:100%;margin:10px 0 4px;padding:10px 14px;border:0;border-radius:22px;background:#2a3942;color:#e9edef;font:400 15px 'IBM Plex Sans Arabic',sans-serif;outline:none}
+    .wa-mrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(134,150,160,.13)}
+    .wa-mrow .avatar{width:38px;height:38px;font-size:16px}
+    .wa-mi{flex:1;min-width:0;display:grid}
+    .wa-mi b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .wa-mi small{color:#8696a0;font-size:12px}
+    .wa-mb{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+    .wa-sheet .wa-mb button[data-x]{width:auto;padding:6px 9px;font-size:13px;border-radius:8px;background:#202c33}
+    .wa-sheet .wa-mb button.d{color:#ff6b81}
     @keyframes waUp{from{transform:translateY(46px);opacity:0}}
     @keyframes waFade{from{opacity:0}}
     /* قائمة المحادثات */
@@ -1559,7 +1584,7 @@
       </section>
 
 
-      <!-- كل الأعضاء (للمدير الرئيسي بس) -->
+      <!-- كل الأعضاء (للمالك بس) -->
       <section id="tabMembers" hidden>
         <div class="stats">
           <div class="stat"><b id="memTotal">0</b><span>إجمالي الأعضاء</span></div>
@@ -1570,13 +1595,13 @@
         <div id="memList"></div>
       </section>
 
-      <!-- إحصائيات (للمدير الرئيسي بس) -->
+      <!-- إحصائيات (للمالك بس) -->
       <section id="tabInsights" hidden>
         <button class="tool" id="insRefresh" type="button" style="width:100%;margin-bottom:10px">🔄 تحديث الإحصائيات</button>
         <div id="insBox"></div>
       </section>
 
-      <!-- سجل الأدمن (للمدير الرئيسي بس) -->
+      <!-- سجل الأدمن (للمالك بس) -->
       <section id="tabLog" hidden>
         <p class="note-s">كل الأدمن وضيوف الأدمن. اضغط على أي واحد عشان تشوف كل حاجة عملها.</p>
         <div id="logList"></div>
@@ -1770,7 +1795,7 @@
        content = أدمن المحتوى: المحتوى بس (يضيفه المدير من اللوحة)
        ========================================================== */
     const OWNER_EMAIL = 'markogoerge123321@gmail.com';
-    const ROLE_LABELS = { owner: 'مدير المنصة', content: 'أدمن المحتوى', guest: 'ضيف أدمن' };
+    const ROLE_LABELS = { owner: 'المالك', content: 'أدمن المحتوى', guest: 'ضيف أدمن' };
 
     let currentRole = null;   // دور المستخدم الحالي (أو null لو مش أدمن)
 
@@ -2203,7 +2228,7 @@
       const hasPhoto = !meAvatar.hidden;
       avMenu = document.createElement('div');
       avMenu.style.cssText = 'position:fixed;top:64px;inset-inline-start:12px;z-index:9999;display:grid;gap:8px;padding:10px;background:var(--bg);color:var(--txt);border:3px solid var(--txt);border-radius:14px';
-      avMenu.innerHTML = (currentRole || !myCode ? '' : '<div class="codebox" style="justify-content:space-between"><b style="direction:rtl">' + esc(myName || 'طالب') + '</b><code>' + esc(myCode) + '</code><button type="button" class="tool copybtn" data-a="copycode">نسخ</button></div>') + (currentRole ? '' : '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>') + (hasPhoto && !currentRole ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '') + '<button class="tool" data-a="logout">🚪 تسجيل خروج</button>' + (currentRole ? '' : '<button class="tool danger" data-a="delacc">⚠️ حذف الحساب</button>');
+      avMenu.innerHTML = (currentRole || !myCode ? '' : '<div class="codebox" style="justify-content:space-between"><b style="direction:rtl">' + esc(myName || 'طالب') + '</b><code>' + esc(myCode) + '</code><button type="button" class="tool copybtn" data-a="copycode">نسخ</button></div>') + (currentRole ? '' : '<button class="tool" data-a="pick">📷 ' + (hasPhoto ? 'تغيير الصورة' : 'إضافة صورة') + '</button>') + (hasPhoto && !currentRole ? '<button class="tool" data-a="del">🗑 مسح الصورة</button>' : '') + (currentRole ? '' : '<button class="tool" data-a="backup">💾 نسخة احتياطية</button><button class="tool" data-a="restore">♻️ استرجاع نسخة</button>') + '<button class="tool" data-a="logout">🚪 تسجيل خروج</button>' + (currentRole ? '' : '<button class="tool danger" data-a="delacc">⚠️ حذف الحساب</button>');
       avMenu.addEventListener('click', async e => {
         const a = e.target.closest('button')?.dataset.a;
         if (!a) return;
@@ -2211,6 +2236,8 @@
         const ref = doc(db, 'users', auth.currentUser.uid);
         closeAvMenu();
         if (a === 'logout') { signOut(auth); return; }
+        if (a === 'backup') { studentBackup(); return; }
+        if (a === 'restore') { studentRestore(); return; }
         if (a === 'delacc') { deleteMyAccount(); return; }
         try {
           if (a === 'del') { await updateDoc(ref, { photo: '' }); toast('اتمسحت الصورة'); }
@@ -2226,6 +2253,44 @@
         } catch (err) { dbError(err); }
       });
       document.body.appendChild(avMenu);
+    }
+    /* نسخة احتياطية للطالب: تقدمه ومفضلته ونتايجه في ملف على جهازه، وتقدر ترجّع التقدم والمفضلة منه */
+    async function studentBackup() {
+      const u = auth.currentUser; if (!u || currentRole) return;
+      try {
+        const [pg, rs] = await Promise.all([
+          getDoc(doc(db, 'progress', u.uid)),
+          getDocs(query(collection(db, 'results'), where('uid', '==', u.uid)))
+        ]);
+        const p = pg.data() || {};
+        const data = {
+          kind: 'student-backup', v: 1, savedAt: new Date().toISOString(),
+          name: myName || '', grade: Number.isInteger(myGrade) ? myGrade : null,
+          done: p.done || {}, favs: p.favs || {},
+          results: rs.docs.map(d => { const x = d.data(); return { lessonId: x.lessonId, score: x.score, total: x.total, grade: x.grade ?? null, subject: x.subject ?? null }; })
+        };
+        downloadFile('backup-' + stamp() + '.json', JSON.stringify(data, null, 2), 'application/json');
+        toast('اتحفظت نسختك الاحتياطية ✓');
+      } catch (err) { dbError(err); }
+    }
+    function studentRestore() {
+      const u = auth.currentUser; if (!u || currentRole) return;
+      const f = document.createElement('input');
+      f.type = 'file'; f.accept = 'application/json,.json';
+      f.onchange = async () => {
+        try {
+          const file = f.files[0];
+          if (!file || file.size > 1e6) throw new Error('bad');
+          const d = JSON.parse(await file.text());
+          if (!d || d.kind !== 'student-backup' || typeof d.done !== 'object' || typeof d.favs !== 'object') throw new Error('bad');
+          const clean = o => Object.fromEntries(Object.keys(o || {}).filter(k => o[k] === true && /^[A-Za-z0-9_-]{1,40}$/.test(k)).slice(0, 2000).map(k => [k, true]));
+          const done = clean(d.done), favs = clean(d.favs);
+          if (!confirm('ترجيع التقدم والمفضلة من النسخة دي؟ هيتضافوا على اللي عندك دلوقتي.')) return;
+          await setDoc(doc(db, 'progress', u.uid), { done, favs, updatedAt: serverTimestamp() }, { merge: true });
+          toast('اترجّع تقدمك ومفضلتك ✓');
+        } catch (err) { toast(err.message === 'bad' || err instanceof SyntaxError ? 'الملف ده مش نسخة احتياطية صحيحة.' : authMessage(err)); }
+      };
+      f.click();
     }
     /* حذف الحساب نهائياً: بياناتك + الحساب نفسه، وتقدر تسجّل من الأول */
     async function deleteMyAccount() {
@@ -2362,7 +2427,7 @@
       updateGate(); updateMaint();
 
       const isStudent = !!user && !currentRole;
-      if (currentRole) { meLetter.hidden = false; meLetter.textContent = initial(user.displayName || user.email || 'A'); }
+      if (currentRole) { meLetter.hidden = false; meLetter.textContent = currentRole === 'owner' ? 'م' : initial(user.displayName || user.email || 'A'); }
       if (isStudent) { watchStudent(user); watchProgress(user); }
       buildHome();
 
@@ -2676,7 +2741,7 @@
       const btn = e.target.closest('button[data-act]');
       if (!btn) return;
       const email = btn.closest('.row').dataset.id;
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       try {
         if (btn.dataset.act === 'reset') {
           await sendPasswordResetEmail(auth, email);
@@ -2696,8 +2761,8 @@
       const say = (text, ok) => { adminMsg.textContent = text; adminMsg.className = 'msg' + (ok ? ' ok' : ''); };
 
       if (!/^\S+@\S+\.\S+$/.test(email)) return say('اكتب بريد إلكتروني صحيح.');
-      if (!isOwner())                    return say('إضافة الأدمن للمدير الرئيسي بس.');
-      if (email === OWNER_EMAIL)         return say('ده إيميل المدير.');
+      if (!isOwner())                    return say('إضافة الأدمن للمالك بس.');
+      if (email === OWNER_EMAIL)         return say('ده إيميل المالك.');
       if (pass.length < 6)               return say('كلمة السر 6 حروف على الأقل.');
 
       const btn = e.target.querySelector('button[type="submit"]');
@@ -2756,7 +2821,7 @@
       const btn = e.target.closest('button[data-act]');
       if (!btn) return;
       const email = btn.closest('.row').dataset.id;
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       try {
         if (btn.dataset.act === 'edit') {
           const st = studentByEmail(email);
@@ -2781,7 +2846,7 @@
       document.getElementById('memTotal').textContent = people.length + extra.length + 1;
       document.getElementById('memAdmins').textContent = admins.filter(a => a.id !== OWNER_EMAIL).length + 1;
 
-      const owner = `<div class="row"><div class="row__info"><b>المدير الرئيسي</b><span>${esc(OWNER_EMAIL)}</span></div><span class="chip chip--role">مدير المنصة</span></div>`;
+      const owner = `<div class="row"><div class="row__info"><b>المالك</b><span>${esc(OWNER_EMAIL)}</span></div><span class="chip chip--role">كامل الصلاحيات</span></div>`;
       const rowsS = people.filter(hit).sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar')).map(s => {
         const em = (s.email || '').toLowerCase(), ad = adminOf(em);
         if (em === OWNER_EMAIL) return '';
@@ -2804,7 +2869,7 @@
       const btn = e.target.closest('button[data-act]');
       if (!btn) return;
       const row = btn.closest('.row'), email = row.dataset.email, id = row.dataset.id;
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       try {
         if (btn.dataset.act === 'open') return openStudent(id);
         if (btn.dataset.act === 'mkadmin') {
@@ -2900,7 +2965,7 @@
       document.getElementById('maintBtn').textContent = m.on ? 'إيقاف الصيانة' : 'تشغيل الصيانة';
     }
     async function saveAnnc(on) {
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       const text = document.getElementById('anncInput').value.trim();
       if (on && !text) return toast('اكتب نص الإعلان الأول.');
       try {
@@ -3866,7 +3931,7 @@
     document.getElementById('stuAdminSave').addEventListener('click', async () => {
       const s = stu(), email = stuEmail();
       const grants = [...document.querySelectorAll('#stuGrants input:checked')].map(b => b.value);
-      if (!isOwner())      return stuAdminSay('للمدير الرئيسي بس.');
+      if (!isOwner())      return stuAdminSay('للمالك بس.');
       if (!s || !email)    return;
       if (s.approved === false) return stuAdminSay('اقبل الطالب الأول.');
       if (!grants.length)  return stuAdminSay('اختار صلاحية واحدة على الأقل.');
@@ -4032,7 +4097,7 @@
 
 
     /* ==========================================================
-       المجتمع: 4 مجموعات للكل + كلم داما / المستر + محادثة بكود + تقييم
+       المجتمع: 4 مجموعات للكل + كلم داما / المستر + تقييم
        - الأعضاء بيشوفوا الأسماء بس (من غير إيميل أو كود)
        - الأدمن (مدير أو أدمن محتوى) بيحذف الرسايل ويقفل الكتابة، ومفيش خروج من المجموعات
        - محدش يعمل مجموعات: المجموعات الأربعة ثابتة في الكود
@@ -4048,7 +4113,7 @@
     const roomName = (r, g) => r.k === 'science' && g === 3 ? 'علوم متكاملة' : r.name;
     const isStaff = () => currentRole === 'owner' || currentRole === 'content';
     const myUid  = () => auth.currentUser?.uid;
-    const myDisp = () => isStaff() ? (auth.currentUser.displayName || 'الإدارة') : (myName || 'طالب');
+    const myDisp = () => currentRole === 'owner' ? 'المالك' : isStaff() ? (auth.currentUser.displayName || 'الإدارة') : (myName || 'طالب');
     const cBody = document.getElementById('cBody'), cTitle = document.getElementById('cTitle');
     const cBack = document.getElementById('cBack'), bnav = document.getElementById('bnav');
     let cUn = [], cLast = 'home', cRoom = null;
@@ -4089,6 +4154,8 @@
     const TK1 = '<svg viewBox="0 0 12 11" width="13" height="11" aria-hidden="true"><path fill="currentColor" d="M11.1.6 4.4 7.5 1.5 4.6.6 5.5l3.8 3.8L12 1.5z"/></svg>';
     const TK2 = '<svg viewBox="0 0 17 11" width="18" height="11" aria-hidden="true"><path fill="currentColor" d="M11.1.6 4.4 7.5 1.5 4.6.6 5.5l3.8 3.8L12 1.5z"/><path fill="currentColor" transform="translate(5 0)" d="M11.1.6 4.4 7.5 1.5 4.6.6 5.5l3.8 3.8L12 1.5z"/></svg>';
     const EMOJIS = ['😀', '😂', '🤣', '😊', '😍', '🥰', '😎', '🤩', '🤔', '😅', '😢', '😭', '😡', '🥳', '🙏', '👍', '👎', '👏', '🙌', '💪', '🔥', '✨', '💯', '❤️', '💙', '💚', '🎉', '📚', '✏️', '📝', '✅', '❌', '⭐', '🏆', '🤝', '😴', '🤯', '😇', '🙈', '👀', '💡', '⏰', '📌', '🎯', '😜', '🫡', '🤗', '😬'];
+    const RX = ['👍', '❤️', '😂', '😮', '😢', '🙏'];                    // التفاعلات السريعة (نفس القايمة في قواعد فايرستور)
+    const slowLabel = s => s >= 3600 ? 'ساعة' : s >= 60 ? Math.round(s / 60) + ' دقيقة' : s + ' ثانية';
 
     /* ورقة سفلية (قايمة الرسالة + معلومات الرسالة) */
     function waCloseSheet() {
@@ -4112,7 +4179,7 @@
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') waCloseSheet(); });
 
-    /* كل الطلاب (للمدير بس): بيتخزن دقيقة عشان ما نكررش القراءة */
+    /* كل الطلاب (للمالك بس): بيتخزن دقيقة عشان ما نكررش القراءة */
     let pplCache = null;
     async function loadPeople() {
       if (pplCache && Date.now() - pplCache.t < 6e4) return pplCache.l;
@@ -4122,7 +4189,7 @@
     }
 
     async function mkAdmin(uidX, n) {
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       const em = ((await getDoc(doc(db, 'users', uidX))).data()?.email || '').toLowerCase();
       if (!em) return toast('مش لاقي إيميل الطالب.');
       const ref = doc(db, 'admins', em), has = (await getDoc(ref)).exists();
@@ -4145,29 +4212,20 @@
       const uid = myUid(), g = gradeNow();
       if (!Number.isInteger(g)) { cTitle.textContent = 'المجتمع'; cBody.innerHTML = '<p class="empty">حسابك مش متسجّل على صف. كلّم الإدارة.</p>'; return; }
       cTitle.textContent = 'المجتمع · ' + GRADES[g].name;
-      if (!isStaff() && myCode) setDoc(doc(db, 'codes', myCode), { uid, name: myName }).catch(() => {});   // عشان زمايلك يلاقوك بالكود
       cBody.innerHTML = `
         ${isStaff() ? '<div class="chips">' + GRADES.map((x, i) => `<button type="button" class="cb" data-a="grade" data-id="${i}" aria-pressed="${i === g}">${x.name}</button>`).join('') + '</div>' : ''}
         <h3 class="wa-sec">المجموعات</h3>
         <div class="wa-list">${ROOMS.map(r => crow(r.ic, roomName(r, g), 'مجموعة ' + GRADES[g].name, 'room', 'g' + g + '_' + r.k, `data-t="${esc(roomName(r, g))}"`)).join('')}</div>
-        ${isOwner() ? `<h3 class="wa-sec">الإدارة</h3><div class="wa-list">${crow('👥', 'كل الناس وأكوادهم', 'كل الطلاب بأسمائهم وأكوادهم (للمدير بس)', 'people')}</div>` : ''}
+        ${isOwner() ? `<h3 class="wa-sec">الإدارة</h3><div class="wa-list">${crow('👥', 'كل الناس وأكوادهم', 'كل الطلاب بأسمائهم وأكوادهم (للمالك بس)', 'people')}</div>` : ''}
         <h3 class="wa-sec">${isStaff() ? 'رسايل الطلاب' : 'كلم الإدارة'}</h3>
         <div class="wa-list" ${isStaff() ? 'id="cThreads"' : ''}>${isStaff() ? '<p class="empty">مفيش رسايل.</p>'
           : crow('💻', 'كلم داما', 'المبرمج اللي عامل المنصة', 'thread', 'dev') + crow('👨‍🏫', 'كلم المستر', 'اسأله أي سؤال', 'thread', 'teacher')}</div>
-        <h3 class="wa-sec">محادثاتي</h3>
-        <div class="wa-list" id="cDms"><p class="empty">مفيش محادثات لسه.</p></div>
-        ${isStaff() ? '' : `<button class="tool" data-a="newdm" style="width:100%;margin:10px 0">➕ محادثة بكود زميل</button>
-          <p class="note-s">كودك: <b>${esc(myCode || '—')}</b>. شاركه مع اللي عايز يكلمك.</p>`}
         <h3 class="wa-sec">لوحة الشرف</h3>
         <div class="wa-list">${crow('🏆', 'لوحة الشرف', 'أعلى درجات الأسبوع', 'board')}</div>
         <h3 class="wa-sec">تقييم المنصة</h3>
         <div class="wa-list">${crow('⭐', 'قيّم المنصة', isStaff() ? 'شوف تقييمات الطلاب' : 'النجوم ورأيك', 'rate')}</div>`;
       const fill = (id, docs, mk) => { const el = document.getElementById(id); if (el && docs.length) el.innerHTML = docs.map(mk).join(''); };
       const byAt = (a, b) => (b.at?.seconds || 0) - (a.at?.seconds || 0);
-      cUn.push(onSnapshot(query(collection(db, 'rooms'), where('members', 'array-contains', uid)), snap => {
-        const ds = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(byAt);
-        fill('cDms', ds, d => { const o = (d.members || []).find(m => m !== uid); const n = d.names?.[o] || 'طالب'; return crow(esc(initial(n)), n, d.last || 'ابدأ المحادثة', 'dm', d.id, `data-t="${esc(n)}"`, fShort(msOf(d.at))); });
-      }, () => {}));
       if (isStaff()) cUn.push(onSnapshot(query(collection(db, 'rooms'), where('kind', 'in', ['dev', 'teacher'])), snap => {
         const ds = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(byAt);
         fill('cThreads', ds.filter(d => d.grade === undefined || d.grade === g), d => crow(d.kind === 'dev' ? '💻' : '👨‍🏫', d.name || 'طالب', d.last || '', 'sthread', d.id, `data-t="${esc((d.kind === 'dev' ? 'داما' : 'المستر') + ' · ' + (d.name || ''))}"`, fShort(msOf(d.at))));
@@ -4178,7 +4236,7 @@
        شاشة كل الناس + أكوادهم (المدير الرئيسي بس)
        ========================================================== */
     function commPeople() {
-      if (!isOwner()) return toast('للمدير الرئيسي بس.');
+      if (!isOwner()) return toast('للمالك بس.');
       cStop(); cTitle.textContent = 'كل الناس'; cBack.hidden = false;
       let all = [], gf = -1, q = '', shown = [];
       cBody.innerHTML = `<div class="wa-find"><input id="pQ" type="search" class="rtl" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل" autocomplete="off"></div>
@@ -4225,10 +4283,10 @@
       cTitle.textContent = title; cBack.hidden = true;
       document.getElementById('screenComm').classList.add('chatmode');
       const uid = myUid(), isDm = id.startsWith('dm_'), staffGroup = !!(o.group && isStaff());
-      let list = [], reads = {}, replyTo = null, firstUnread = '', prevRead = null, newCnt = 0, first = true, seen1 = false;
+      let list = [], reads = {}, replyTo = null, editing = null, firstUnread = '', prevRead = null, newCnt = 0, first = true, seen1 = false;
 
       const gIdx = o.group ? +id[1] : null;
-      const sub = o.group ? 'مجموعة ' + (GRADES[gIdx]?.name || '')
+      const sub = o.group ? 'مجموعة ' + (GRADES[gIdx]?.name || '') + (staffGroup ? ' · اضغط على الصورة للأعضاء' : '')
         : o.thread ? (o.thread === 'dev' ? 'المبرمج' : 'المستر') + ' · بيرد عليك في أقرب وقت'
         : isDm ? 'محادثة خاصة' : 'رسالة من طالب';
       const hIc = o.group ? (ROOMS.find(r => r.k === id.split('_')[1])?.ic || '💬') : o.thread ? (o.thread === 'dev' ? '💻' : '👨‍🏫') : esc(initial(title));
@@ -4236,18 +4294,23 @@
       cBody.innerHTML = `<div class="wa">
         <header class="wa-h">
           <button class="wa-hb" type="button" data-a="cback" aria-label="رجوع"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M4 11h12.2l-5.6-5.6L12 4l8 8-8 8-1.4-1.4 5.6-5.6H4z"/></svg></button>
-          <span class="wa-av wa-av--h" style="background:${waAvBg(id)}">${hIc}</span>
+          ${staffGroup ? `<button type="button" class="wa-av wa-av--h wa-av--btn" data-a="members" aria-label="أعضاء المجموعة" style="background:${waAvBg(id)}">${hIc}</button>` : `<span class="wa-av wa-av--h" style="background:${waAvBg(id)}">${hIc}</span>`}
           <span class="wa-ht"><b>${esc(title)}</b><small>${esc(sub)}</small></span>
           ${staffGroup ? '<button class="wa-hb" type="button" data-a="tools" aria-label="أدوات الإدارة">⋮</button>' : ''}
         </header>
+        ${o.group ? `<div class="wa-teach" id="cTeach" ${staffGroup && isOwner() ? 'data-a="teacherpic"' : ''} hidden></div>` : ''}
+        ${staffGroup && isOwner() ? '<input type="file" id="cTeachFile" accept="image/*" hidden>' : ''}
         ${staffGroup ? `<div class="wa-tools" id="cTools" hidden><div class="addbox"><button class="tool" data-a="lock" id="cLock" type="button"></button>
-          <label class="field"><span>موعد فتح الكتابة للطلاب (اختياري)</span><input type="datetime-local" id="cOpenAt"></label>
+          ${isOwner() ? `<label class="field"><span>موعد فتح الكتابة للطلاب (اختياري)</span><input type="datetime-local" id="cOpenAt"></label>
           <button class="tool" data-a="openat" type="button">حفظ الموعد</button>
+          <label class="field" style="margin-top:10px"><span>وقت الانتظار بين رسايل كل طالب (منع الإزعاج)</span></label>
+          <select id="cSlow"><option value="0">بدون</option><option value="10">10 ثواني</option><option value="30">30 ثانية</option><option value="60">دقيقة</option><option value="300">5 دقايق</option><option value="900">15 دقيقة</option><option value="3600">ساعة</option></select>
+          <button class="tool" data-a="slow" type="button">حفظ وقت الانتظار</button>
           <button class="tool" data-a="poll" type="button" style="margin-top:8px">📊 تصويت جديد</button>
           <button class="tool" data-a="endpoll" type="button" style="margin-top:8px">إنهاء التصويت</button>
           <button class="tool" data-a="pin" type="button" style="margin-top:8px">📌 تثبيت رسالة</button>
           <button class="tool" data-a="unpin" type="button" style="margin-top:8px">إلغاء التثبيت</button>
-          <button class="tool danger" data-a="clear" type="button" style="margin-top:8px">🧹 مسح كل الرسايل</button></div></div>` : ''}
+          <button class="tool danger" data-a="clear" type="button" style="margin-top:8px">🧹 مسح كل الرسايل</button>` : ''}</div></div>` : ''}
         <div class="wa-top"><div id="cPin"></div><div id="cPoll"></div></div>
         <div class="wa-mw">
           <div class="wa-msgs" id="cMsgs"></div>
@@ -4312,7 +4375,9 @@
           const quote = m.reply && m.reply.text ? `<div class="wa-q" data-q="${esc(m.reply.id)}"><b style="color:${waColor(m.reply.name)}">${esc(m.reply.name)}</b><span>${esc(m.reply.text)}</span></div>` : '';
           const tk = mine ? (m._p ? '<span class="wa-tk">🕓</span>' : `<span class="wa-tk ${rd.length ? 'wa-tk--r' : ''}" data-i="${esc(m.id)}">${rd.length ? TK2 : TK1}</span>`) : '';
           const eye = rd.length && o.group ? `<button type="button" class="wa-eye" data-i="${esc(m.id)}">👁 ${rd.length}</button>` : '';
-          html += `<div class="wa-b ${mine ? 'wa-b--me' : ''} ${cluster ? 'wa-c' : 'wa-tail'}" data-id="${esc(m.id)}">${nameHtml}${quote}<div class="wa-t" dir="auto">${linkify(m.text)}<span class="wa-meta">${eye}${esc(fTime(m._t))}${tk}</span></div></div>`;
+          const rxs = m.rx && typeof m.rx === 'object' ? Object.values(m.rx).filter(e => RX.includes(e)) : [];
+          const rxHtml = rxs.length ? `<div class="wa-rx">${RX.map(e => { const n = rxs.filter(v => v === e).length; return n ? `<button type="button" class="wa-rxc ${m.rx[uid] === e ? 'on' : ''}" data-r="${e}" data-m="${esc(m.id)}">${e}<i>${n}</i></button>` : ''; }).join('')}</div>` : '';
+          html += `<div class="wa-b ${mine ? 'wa-b--me' : ''} ${cluster ? 'wa-c' : 'wa-tail'}" data-id="${esc(m.id)}">${nameHtml}${quote}<div class="wa-t" dir="auto">${linkify(m.text)}<span class="wa-meta">${eye}${m.edited ? '<em class="wa-ed">معدّلة</em>' : ''}${esc(fTime(m._t))}${tk}</span></div>${rxHtml}</div>`;
           prev = m;
         });
         b.innerHTML = list.length ? html : '<p class="empty">ابدأ المحادثة.</p>';
@@ -4324,10 +4389,12 @@
         updateDown();
 
         const waitMs = (R.openAt || 0) - Date.now(), closed = !!(o.group && (R.locked || waitMs > 0));
-        const blocked = !isStaff() && (closed || myMuted);
+        const muteHere = R.myMode === 'mute';
+        const blocked = !isStaff() && (closed || myMuted || muteHere);
         form.hidden = blocked; if (blocked) emo.hidden = true;
+        ta.placeholder = (o.group && R.slow && !isStaff()) ? 'اكتب رسالة (كل ' + slowLabel(R.slow) + ')' : 'اكتب رسالة';
         const note = document.getElementById('cNote');
-        const nt = (myMuted && !isStaff()) ? 'اتكتمت في المجتمع. تقدر تقرأ بس.' : !o.group ? '' : R.locked ? 'الكتابة مقفولة دلوقتي (الإدارة بس).' : waitMs > 0 ? 'الكتابة هتفتح ' + new Date(R.openAt).toLocaleString('ar-EG') : '';
+        const nt = (myMuted && !isStaff()) ? 'اتكتمت في المجتمع. تقدر تقرأ بس.' : (muteHere && !isStaff()) ? 'الإدارة خلّتك تقرأ بس في المجموعة دي.' : !o.group ? '' : R.locked ? 'الكتابة مقفولة دلوقتي (الإدارة بس).' : waitMs > 0 ? 'الكتابة هتفتح ' + new Date(R.openAt).toLocaleString('ar-EG') : '';
         note.textContent = nt; note.hidden = !nt;
         const pe = document.getElementById('cPin');
         if (pe) pe.innerHTML = R.pinned?.text ? '<div class="wa-pin">📌 <span>' + esc(R.pinned.text) + '</span></div>' : '';
@@ -4380,25 +4447,34 @@
 
       /* ---- الرد على رسالة ---- */
       const setReply = m => {
+        if (m && editing) { editing = null; ta.value = ''; autosize(); }
         replyTo = m ? { id: m.id, name: m.name, text: m.text } : null;
         const rp = document.getElementById('cReply');
         rp.hidden = !m;
         rp.innerHTML = m ? `<div class="wa-rp__b"><b style="color:${waColor(m.name)}">${esc(m.name)}</b><span>${esc(m.text.slice(0, 100))}</span></div><button type="button" data-x="x" aria-label="إلغاء الرد">✕</button>` : '';
       };
-      document.getElementById('cReply').addEventListener('click', e => { if (e.target.closest('[data-x]')) setReply(null); });
+      document.getElementById('cReply').addEventListener('click', e => {
+        if (!e.target.closest('[data-x]')) return;
+        if (editing) { editing = null; ta.value = ''; autosize(); }
+        setReply(null);
+      });
 
       /* ---- قايمة الرسالة (ضغطة على الفقاعة) ---- */
       const msgMenu = mid => {
         const m = list.find(x => x.id === mid); if (!m) return;
         const mine = m.uid === uid;
-        waSheet(`<div class="wa-b ${mine ? 'wa-b--me' : ''} wa-prevb"><div class="wa-t" dir="auto">${linkify(m.text)}</div></div>
+        waSheet(`<div class="wa-rxbar">${RX.map(e => `<button type="button" data-x="rx" data-e="${e}" class="${m.rx && m.rx[uid] === e ? 'on' : ''}">${e}</button>`).join('')}</div>
+          <div class="wa-b ${mine ? 'wa-b--me' : ''} wa-prevb"><div class="wa-t" dir="auto">${linkify(m.text)}</div></div>
           ${form.hidden ? '' : '<button type="button" data-x="reply">↩️ رد</button>'}
           <button type="button" data-x="copy">📋 نسخ الرسالة</button>
           ${canInfo(m) ? `<button type="button" data-x="info">👁 ${mine ? 'من قرى رسالتي' : 'من قرا الرسالة'}</button>` : ''}
-          ${isStaff() && !isDm ? '<button type="button" class="d" data-x="del">🗑 حذف الرسالة</button>' : ''}
-          ${isOwner() && !mine ? '<button type="button" data-x="mkadmin">👤 تعيين / إزالة أدمن</button>' : ''}`, async x => {
+          ${mine && !form.hidden && !m._p && Date.now() - m._t < 9e5 ? '<button type="button" data-x="edit">✏️ تعديل الرسالة</button>' : ''}
+          ${(isStaff() && !isDm) || mine ? '<button type="button" class="d" data-x="del">🗑 حذف الرسالة</button>' : ''}
+          ${isOwner() && !mine ? '<button type="button" data-x="mkadmin">👤 تعيين / إزالة أدمن</button>' : ''}`, async (x, el) => {
           try {
-            if (x === 'reply') { waCloseSheet(); setReply(m); ta.focus(); }
+            if (x === 'rx') { waCloseSheet(); setRx(mid, el.dataset.e); }
+            else if (x === 'edit') { waCloseSheet(); setEdit(m); }
+            else if (x === 'reply') { waCloseSheet(); setReply(m); ta.focus(); }
             else if (x === 'copy') { waCloseSheet(); copyText(m.text, 'اتنسخت الرسالة'); }
             else if (x === 'info') openInfo(mid);
             else if (x === 'del') { waCloseSheet(); await delMsg(id, mid); }
@@ -4414,6 +4490,7 @@
       };
       box().addEventListener('click', e => {
         if (e.target.closest('a')) return;
+        const rc = e.target.closest('[data-r]'); if (rc) return setRx(rc.dataset.m, rc.dataset.r);
         const q = e.target.closest('[data-q]'); if (q) return jumpTo(q.dataset.q);
         const i = e.target.closest('[data-i]'); if (i) return openInfo(i.dataset.i);
         const bb = e.target.closest('.wa-b'); if (bb) msgMenu(bb.dataset.id);
@@ -4439,15 +4516,124 @@
         e.preventDefault();
         const text = ta.value.trim().slice(0, 1000);
         if (!text) return;
+        if (editing) {                                           // تعديل رسالة موجودة
+          const mid = editing, old = list.find(x => x.id === mid);
+          editing = null; ta.value = ''; autosize(); setReply(null); emo.hidden = true;
+          if (!old || text === old.text) return;
+          try { await updateDoc(doc(db, 'rooms', id, 'msgs', mid), { text, edited: true }); }
+          catch (err) { toast(err.code === 'permission-denied' ? 'التعديل متاح 15 دقيقة بس بعد الإرسال.' : authMessage(err)); }
+          return;
+        }
+        if (!isStaff() && o.group && R.slow) {                   // وقت الانتظار اللي حدده الأدمن
+          const wait = (R.lastMs || 0) + R.slow * 1000 - Date.now();
+          if (wait > 0) return toast('استنى ' + Math.ceil(wait / 1000) + ' ثانية قبل الرسالة الجاية.');
+        }
         const reply = replyTo ? { id: String(replyTo.id), name: String(replyTo.name || '').slice(0, 60), text: String(replyTo.text || '').slice(0, 100) } : null;
         ta.value = ''; autosize(); setReply(null); emo.hidden = true;
         try {
           const last = text.slice(0, 60);
           if (o.thread) await setDoc(doc(db, 'rooms', id), { kind: o.thread, uid, name: myDisp(), grade: myGrade, last, at: serverTimestamp() }, { merge: true });
           else if (o.thread === undefined && !o.group) await updateDoc(doc(db, 'rooms', id), { last, at: serverTimestamp() });
-          await addDoc(collection(db, 'rooms', id, 'msgs'), { uid, name: myDisp(), text, admin: isStaff(), badge: isStaff() ? '' : myBadge, at: serverTimestamp(), ...(reply ? { reply } : {}) });
-        } catch (err) { ta.value = text; autosize(); dbError(err); }
+          const data = { uid, name: myDisp(), text, admin: isStaff(), badge: isStaff() ? '' : myBadge, at: serverTimestamp(), ...(reply ? { reply } : {}) };
+          if (o.group && !isStaff() && R.slow) {
+            const bt = writeBatch(db);
+            bt.set(doc(db, 'rooms', id, 'last', uid), { at: serverTimestamp() });
+            bt.set(doc(collection(db, 'rooms', id, 'msgs')), data);
+            await bt.commit(); R.lastMs = Date.now();
+          } else await addDoc(collection(db, 'rooms', id, 'msgs'), data);
+        } catch (err) {
+          ta.value = text; autosize();
+          if (err.code === 'permission-denied' && o.group && R.slow && !isStaff()) toast('استنى شوية قبل الرسالة الجاية.'); else dbError(err);
+        }
       });
+
+      /* ---- تفاعل سريع: تفاعل واحد لكل شخص على الرسالة، والضغط عليه تاني بيشيله ---- */
+      const setRx = async (mid, e) => {
+        const m = list.find(x => x.id === mid);
+        if (!m || m._p || !RX.includes(e)) return;
+        try { await updateDoc(doc(db, 'rooms', id, 'msgs', mid), { ['rx.' + uid]: (m.rx && m.rx[uid] === e) ? deleteField() : e }); }
+        catch (err) { dbError(err); }
+      };
+
+      /* ---- تعديل رسالتي: بنحط نصها في خانة الكتابة ---- */
+      const setEdit = m => {
+        const rp = document.getElementById('cReply');
+        replyTo = null; editing = m.id;
+        rp.hidden = false;
+        rp.innerHTML = `<div class="wa-rp__b"><b>✏️ تعديل الرسالة</b><span>${esc(m.text.slice(0, 100))}</span></div><button type="button" data-x="x" aria-label="إلغاء التعديل">✕</button>`;
+        ta.value = m.text; autosize(); ta.focus();
+      };
+
+      /* ---- المستر في كل مجموعة + صورته (الإدارة بتغيّرها) ---- */
+      const renderTeacher = () => {
+        const el = document.getElementById('cTeach'); if (!el) return;
+        const t = R.teacher || {};
+        el.innerHTML = `${avatarImg(t.photo, '', 'المستر', '')}<span><b>${esc(t.name || 'المستر')}</b> موجود في المجموعة</span>${staffGroup && isOwner() ? '<small>اضغط لتغيير صورته</small>' : ''}`;
+        el.hidden = false;
+      };
+      renderTeacher();
+      const tf = document.getElementById('cTeachFile');
+      if (tf) tf.addEventListener('change', async () => {
+        const f = tf.files[0]; tf.value = ''; if (!f) return;
+        try {
+          const photo = await fileToAvatar(f);
+          await setDoc(doc(db, 'settings', 'teacher'), { name: 'المستر', photo });
+          toast('اتغيّرت صورة المستر ✓');
+        } catch (err) { toast(err.message === 'big' ? 'الصورة كبيرة قوي.' : err.message === 'type' ? 'اختار صورة صحيحة.' : authMessage(err)); }
+      });
+
+      /* ---- أعضاء المجموعة (للإدارة): قراءة بس / حظر / مسح رسايله ---- */
+      const drawMembers = () => {
+        const el = document.getElementById('mList'); if (!el) return;
+        const q = (R.mq || '').trim().toLowerCase(), rs = R.rs || {};
+        const ps = (R.people || []).filter(p => p.grade === gIdx && p.approved !== false && (!q || String(p.name || '').toLowerCase().includes(q)))
+          .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+        const cnt = document.getElementById('mCnt'); if (cnt) cnt.textContent = ps.length + ' طالب';
+        el.innerHTML = ps.length ? ps.map(p => {
+          const st = rs[p.id]?.mode, n = esc(p.name || 'طالب'), u = esc(p.id);
+          const state = st === 'ban' ? '⛔ محظور من المجموعة' : st === 'mute' ? '🔇 قراءة بس' : p.muted ? '🔇 مكتوم في كل المجتمع' : p.blocked ? '⛔ محظور من المنصة' : '';
+          return `<div class="wa-mrow"><span>${avatarImg(p.photo, '', p.name, p.badge)}</span>
+            <div class="wa-mi"><b>${n}</b>${state ? `<small>${state}</small>` : ''}</div>
+            <div class="wa-mb">
+              ${st ? `<button type="button" data-x="free" data-u="${u}" data-n="${n}">✅ فك</button>`
+                   : `<button type="button" data-x="mute" data-u="${u}" data-n="${n}">🔇 قراءة بس</button><button type="button" class="d" data-x="ban" data-u="${u}" data-n="${n}">⛔ حظر</button>`}
+              <button type="button" data-x="clr" data-u="${u}" data-n="${n}">🧹 رسايله</button>
+              ${isOwner() ? `<button type="button" data-x="adm" data-u="${u}" data-n="${n}">👤 أدمن</button>` : ''}
+            </div></div>`;
+        }).join('') : '<p class="note-s">مفيش نتايج.</p>';
+      };
+      const onMember = async (x, el) => {
+        const u = el.dataset.u, n = el.dataset.n || 'الطالب';
+        try {
+          if (x === 'mute' || x === 'ban') {
+            if (x === 'ban' && !confirm('حظر ' + n + ' من المجموعة؟ مش هيقدر يقرا ولا يكتب.')) return;
+            await setDoc(doc(db, 'rooms', id, 'restrict', u), { mode: x, name: n.slice(0, 60), at: serverTimestamp() });
+            logStu(u, (x === 'ban' ? 'حظر من مجموعة ' : 'قراءة بس في مجموعة ') + title);
+            toast(x === 'ban' ? 'اتحظر من المجموعة' : 'بقى يقرا بس');
+          } else if (x === 'free') {
+            await deleteDoc(doc(db, 'rooms', id, 'restrict', u));
+            logStu(u, 'فك القيد في مجموعة ' + title);
+            toast('اتفك القيد ✓');
+          } else if (x === 'clr') {
+            if (!confirm('مسح كل رسايل ' + n + ' في المجموعة دي؟')) return;
+            const sn = await getDocs(query(collection(db, 'rooms', id, 'msgs'), where('uid', '==', u)));
+            for (let i = 0; i < sn.docs.length; i += 400) { const bt = writeBatch(db); sn.docs.slice(i, i + 400).forEach(d => bt.delete(d.ref)); await bt.commit(); }
+            toast('اتمسحت رسايله (' + sn.size + ')');
+          } else if (x === 'adm') await mkAdmin(u, n);
+        } catch (err) { dbError(err); }
+      };
+      R.openMembers = async () => {
+        if (!staffGroup) return;
+        R.mq = '';
+        waSheet(`<h3 class="wa-sh-t">أعضاء ${esc(title)}</h3>
+          <div class="wa-irow">${avatarImg((R.teacher || {}).photo, '', 'المستر', '')}<b>${esc((R.teacher || {}).name || 'المستر')}</b><small>موجود في كل المجموعات</small></div>
+          <input id="mQ" type="search" class="wa-msearch" placeholder="🔍 ابحث بالاسم" autocomplete="off">
+          <p class="note-s" id="mCnt"></p><div id="mList"><p class="note-s">بيحمّل...</p></div>
+          <button type="button" class="big" data-x="close">إغلاق</button>`, onMember);
+        document.getElementById('mQ').addEventListener('input', e => { R.mq = e.target.value; drawMembers(); });
+        try { R.people = await loadPeople(); } catch (err) { R.people = []; dbError(err); }
+        drawMembers();
+      };
 
       /* ---- الاشتراكات (بعد معرفة آخر مرة قريت فيها عشان "رسايل جديدة") ---- */
       (async () => {
@@ -4463,7 +4649,10 @@
           } else if (!wasBottom) newCnt += list.filter(m => !old.has(m.id) && m.uid !== uid).length;
           draw();
           if (R.info) renderInfo();
-        }, err => { cBody.innerHTML = `<p class="empty">${esc(authMessage(err))}</p>`; }));
+        }, err => {
+          if (o.group && err.code === 'permission-denied' && !isStaff()) { cBack.hidden = false; cBody.innerHTML = '<p class="empty">مش مسموحلك تدخل المجموعة دي دلوقتي. كلّم الإدارة.</p>'; }
+          else cBody.innerHTML = `<p class="empty">${esc(authMessage(err))}</p>`;
+        }));
         cUn.push(onSnapshot(collection(db, 'rooms', id, 'reads'), snap => {
           if (cRoom !== R) return;
           reads = {};
@@ -4474,9 +4663,20 @@
         if (o.group) cUn.push(onSnapshot(doc(db, 'rooms', id), s => {
           if (cRoom !== R) return;
           R.locked = !!s.data()?.locked; R.openAt = s.data()?.openAt || 0; R.pinned = s.data()?.pinned || null; R.poll = s.data()?.poll || null;
+          R.slow = Number(s.data()?.slow) || 0; const sl = document.getElementById('cSlow'); if (sl) sl.value = String(R.slow);
           clearTimeout(cTm); if (R.openAt > Date.now()) cTm = setTimeout(draw, Math.min(R.openAt - Date.now() + 500, 2e9));
           draw();
         }, () => {}));
+        if (o.group) cUn.push(onSnapshot(doc(db, 'settings', 'teacher'), s => { if (cRoom !== R) return; R.teacher = s.data() || null; renderTeacher(); }, () => {}));
+        if (staffGroup) cUn.push(onSnapshot(collection(db, 'rooms', id, 'restrict'), snap => {
+          if (cRoom !== R) return;
+          R.rs = {}; snap.docs.forEach(d => { R.rs[d.id] = d.data(); });
+          drawMembers();
+        }, () => {}));
+        if (o.group && !isStaff()) {
+          cUn.push(onSnapshot(doc(db, 'rooms', id, 'restrict', uid), s => { if (cRoom !== R) return; R.myMode = s.data()?.mode || ''; draw(); }, () => {}));
+          cUn.push(onSnapshot(doc(db, 'rooms', id, 'last', uid), s => { if (cRoom !== R) return; R.lastMs = msOf(s.data()?.at); }, () => {}));
+        }
         if (o.group) cUn.push(onSnapshot(collection(db, 'rooms', id, 'votes'), snap => {
           if (cRoom !== R) return;
           R.votes = {};
@@ -4489,15 +4689,23 @@
     cBody.addEventListener('click', async e => {
       const b = e.target.closest('[data-a]'); if (!b) return;
       const a = b.dataset.a, id = b.dataset.id;
+      /* الأدمن المعيّن: مسح وتقييد وقفل/فتح بس. الباقي للمالك */
+      if (!isOwner() && ['poll', 'endpoll', 'openat', 'clear', 'pin', 'unpin', 'slow', 'teacherpic'].includes(a)) return toast('للمالك بس.');
       try {
         if (a === 'grade') { cGrade = +id; commList(); }
         if (a === 'cback') commList();
         if (a === 'people') commPeople();
+        if (a === 'members') cRoom?.openMembers?.();
+        if (a === 'teacherpic') document.getElementById('cTeachFile')?.click();
+        if (a === 'slow' && cRoom) {
+          const v = +document.getElementById('cSlow').value || 0;
+          await setDoc(doc(db, 'rooms', cRoom.id), { slow: v }, { merge: true });
+          toast(v ? 'اتفعّل وقت الانتظار: ' + slowLabel(v) : 'اتلغى وقت الانتظار');
+        }
         if (a === 'tools') document.getElementById('cTools')?.toggleAttribute('hidden');
         if (a === 'room') openRoom(id, b.dataset.t, { group: true });
         if (a === 'thread') openRoom(id + '_' + myUid(), id === 'dev' ? 'كلم داما' : 'كلم المستر', { thread: id });
         if (a === 'sthread' || a === 'dm') openRoom(id, b.dataset.t || 'محادثة', {});
-        if (a === 'newdm') newDm();
         if (a === 'rate') commRate();
         if (a === 'board') commBoard();
         if (a === 'vote' && cRoom?.poll && !isStaff()) {
@@ -4533,20 +4741,6 @@
         if (a === 'unpin' && cRoom) { await setDoc(doc(db, 'rooms', cRoom.id), { pinned: deleteField() }, { merge: true }); toast('اتشال التثبيت'); }
       } catch (err) { dbError(err); }
     });
-
-    async function newDm() {
-      const code = (prompt('اكتب كود زميلك (6 حروف وأرقام):') || '').trim().toUpperCase().replace(/[\s-]/g, '');
-      if (!code) return;
-      try {
-        const s = await getDoc(doc(db, 'codes', code));
-        if (!s.exists()) return toast('الكود ده مش موجود.');
-        const o = s.data(), me = myUid();
-        if (o.uid === me) return toast('ده كودك انت 😄');
-        const id = 'dm_' + [me, o.uid].sort().join('_');
-        await setDoc(doc(db, 'rooms', id), { kind: 'dm', members: [me, o.uid], names: { [me]: myDisp(), [o.uid]: o.name }, at: serverTimestamp() }, { merge: true });
-        openRoom(id, o.name, {});
-      } catch (err) { dbError(err); }
-    }
 
     function weekKey(d = new Date()) {
       const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
